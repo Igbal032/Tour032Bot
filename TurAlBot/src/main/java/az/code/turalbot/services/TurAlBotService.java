@@ -19,9 +19,9 @@ public interface TurAlBotService {
     SendMessage getQuestion(long questionId, Language language, String UUID, Long chatId);
     SendMessage handlerInputMessage(Message message);
     BotApiMethod<?> processCallBack(CallbackQuery callbackQuery);
-    Map<Question, String> questionsAndAnswers(long chatId);
+    Map<String, String> questionsAndAnswers(long chatId);
     InlineKeyboardButton createInlineKeyboardButton(Button button);
-    boolean correctAnswerOrNot(long questionId, CallbackQuery callbackQuery);
+    boolean correctAnswerOrNot(long questionId, long chatId,String data);
     AnswerCallbackQuery answerCallBackQuery(String message,boolean isShow, String callBackQueryId);
-    boolean hasNextQuestion(Long chatId);
+    void saveData(long chatId, String keyWord, String callBackData);
 }

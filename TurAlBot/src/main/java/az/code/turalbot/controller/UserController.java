@@ -24,7 +24,7 @@ public class UserController {
         System.out.println("Excellent!! "+ chatId);
         List<Pair<String, String>> pairs = new ArrayList<>();
         turAlBotService.questionsAndAnswers(chatId).entrySet().forEach(w->
-                        System.out.println("Sual: "+w.getKey().getContent()+" - "+w.getValue())
+                        System.out.println("Sual: "+w.getKey()+" - "+w.getValue())
                 );
         return new ResponseEntity<>(HttpStatus.OK);
     }

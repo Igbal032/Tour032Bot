@@ -23,6 +23,4 @@ public class Action {
     private Integer nextId;
     @ManyToOne
     private Question question;
-    @ManyToOne
-    private Language language;
 }

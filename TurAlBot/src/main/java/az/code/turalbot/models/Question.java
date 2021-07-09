@@ -19,6 +19,7 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String content;
+    private String keyWord;
     @OneToMany(mappedBy = "question")
     private List<Button> buttons = new ArrayList<>();
 }
