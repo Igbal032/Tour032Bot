@@ -1,5 +1,6 @@
 package az.code.turalbot.services;
 
+import az.code.turalbot.models.Action;
 import az.code.turalbot.models.Button;
 import az.code.turalbot.models.Language;
 import az.code.turalbot.models.Question;
@@ -18,6 +19,9 @@ public interface TurAlBotService {
     InlineKeyboardMarkup createButtons(List<Button> buttonList);
     SendMessage getQuestion(long questionId, Language language, String UUID, Long chatId);
     SendMessage handlerInputMessage(Message message);
+    SendMessage stopChat(Long chatId);
+    SendMessage startChat(Long chatId);
+    SendMessage returnNotification(long chatId, String type);
     BotApiMethod<?> processCallBack(CallbackQuery callbackQuery);
     Map<String, String> questionsAndAnswers(long chatId);
     InlineKeyboardButton createInlineKeyboardButton(Button button);

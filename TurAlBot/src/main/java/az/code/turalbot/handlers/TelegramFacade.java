@@ -29,6 +29,7 @@ public class TelegramFacade {
         if (message!=null&&message.hasText()){
             reply = turAlBotService.handlerInputMessage(message);
         }
+
         return reply;
     }
 }
