@@ -9,9 +9,9 @@ public class Utils {
         Matcher matcher = pattern.matcher(count);
         return matcher.matches();
     }
-    public static boolean regexForDate(String date){
-        Pattern pattern = Pattern.compile("[0-3][0-9]-[0-1][0-9]-[\\d]{4}");
-        Matcher matcher = pattern.matcher(date);
+    public static boolean regexForData(String text, String regex){
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(text);
         return matcher.matches();
     }
 }

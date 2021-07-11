@@ -1,5 +1,6 @@
 package az.code.turalbot.services;
 
+import az.code.turalbot.daos.RequestDAO;
 import az.code.turalbot.models.*;
 import az.code.turalbot.repos.*;
 import az.code.turalbot.utils.GenerateUUID;
@@ -14,7 +15,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -26,7 +26,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
     private final TranslateRepo translateRepo;
     private final ButtonsRepo buttonsRepo;
     private final NotificationRepo notificationRepo;
-    private final RequestRepo requestRepo;
+    private final RequestDAO requestDAO;
     Map<Long, Action> currentAction = new HashMap<>();
     Map<Long, Language> currentLanguage = new HashMap<>();
     Map<Long, Map<String, String>> questionsAndAnswers = new HashMap<>();
@@ -50,15 +50,14 @@ public class TurAlBotServiceImp implements TurAlBotService{
                 &&botState.getType().equals("button")){
             return returnNotification(message.getChatId(),"wrongAnswer");
         }
-        if (botState.getQuestion().getKeyWord().equals("travelStartDate")){
-            if (!Utils.regexForDate(message.getText().trim())){
-                return returnNotification(message.getChatId(),"date");
+        if (botState.getQuestion().getRegex()!=null){
+            if (!Utils.regexForData(message.getText().trim(),botState.getQuestion().getRegex())){
+                return returnNotification(message.getChatId(),botState.getQuestion().getTypeOfNotification());
             }
         }
         if (botState.getNextId()==null){
             return returnNotification(message.getChatId(),"wait");
         }
-
         questionsAndAnswers.get(message.getChatId()).
                 put(botState.getQuestion().getKeyWord(),message.getText());
         sendMessage = getQuestion(currentAction.get(message.getChatId()).getNextId(),currentLanguage.get(message.getChatId()),null, message.getChatId());
@@ -71,6 +70,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
         Boolean isProgressOrNpt = isProgress.get(chatId);
         if (isProgressOrNpt!=null){
             isProgress.put(chatId,null);
+            Requests findRequest = requestDAO.getRequestByIsActiveAndChatId(chatId,true);
             return returnNotification(chatId,"stop");
         }
         else {
@@ -241,14 +241,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
             jsonText.append('"'+w.getKey()+'"'+':'+'"'+w.getValue()+'"').append(',');
         });
         jsonText.append("}").deleteCharAt(jsonText.lastIndexOf(","));
-        Requests newRequests = Requests.builder()
-                .UUID(GenerateUUID.generateUUID())
-                .chatId(chatId)
-                .isActive(true)
-                .jsonText(jsonText.toString())
-                .createdDate(LocalDateTime.now())
-                .build();
-        Requests requests =  requestRepo.save(newRequests);
+        Requests requests = requestDAO.saveRequest(chatId, jsonText.toString());
         System.out.println(requests.getJsonText());
         return requests;
     }

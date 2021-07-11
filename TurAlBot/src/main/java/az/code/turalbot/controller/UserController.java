@@ -28,4 +28,8 @@ public class UserController {
                 );
         return new ResponseEntity<>(HttpStatus.OK);
     }
+    @GetMapping("/info")
+    public ResponseEntity<List<Pair<String, String>>> sendMessage(@RequestParam long chatId) {
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }

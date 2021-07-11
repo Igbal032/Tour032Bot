@@ -20,6 +20,8 @@ public class Question {
     private Long id;
     private String content;
     private String keyWord;
+    private String regex;
+    private String typeOfNotification;
     @OneToMany(mappedBy = "question")
     private List<Button> buttons = new ArrayList<>();
 }
