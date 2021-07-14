@@ -23,13 +23,9 @@ public class UserController {
     public ResponseEntity<List<Pair<String, String>>> getAnswers(@RequestParam long chatId) {
         System.out.println("Excellent!! "+ chatId);
         List<Pair<String, String>> pairs = new ArrayList<>();
-        turAlBotService.questionsAndAnswers(chatId).entrySet().forEach(w->
+        turAlBotService.getQuestionsAndAnswers(chatId).entrySet().forEach(w->
                         System.out.println("Sual: "+w.getKey()+" - "+w.getValue())
                 );
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-    @GetMapping("/info")
-    public ResponseEntity<List<Pair<String, String>>> sendMessage(@RequestParam long chatId) {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

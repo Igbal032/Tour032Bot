@@ -7,14 +7,16 @@ import lombok.Setter;
 import org.apache.commons.codec.language.bm.Lang;
 
 import javax.persistence.*;
+import java.io.Serializable;
 
 @Getter
 @Setter
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "actions")
-public class Action {
+public class Action implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

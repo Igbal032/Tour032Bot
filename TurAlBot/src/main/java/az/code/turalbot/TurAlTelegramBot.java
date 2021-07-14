@@ -8,6 +8,7 @@ import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updates.SetWebhook;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -34,6 +35,7 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
     @Override
     public BotApiMethod onWebhookUpdateReceived(Update update) {
         final BotApiMethod<?>  replyBot =  telegramFacade.handlerUpdate(update);
+//        SetWebhook setWebhook =
         return replyBot;
     }
 

@@ -6,6 +6,8 @@ import az.code.turalbot.repos.*;
 import az.code.turalbot.utils.GenerateUUID;
 import az.code.turalbot.utils.Utils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -27,10 +29,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
     private final ButtonsRepo buttonsRepo;
     private final NotificationRepo notificationRepo;
     private final RequestDAO requestDAO;
-    Map<Long, Action> currentAction = new HashMap<>();
-    Map<Long, Language> currentLanguage = new HashMap<>();
-    Map<Long, Map<String, String>> questionsAndAnswers = new HashMap<>();
-    Map<Long, Boolean> isProgress = new HashMap<>();
+    private final SessionService sessionService;
 
     @Override
     public  SendMessage handlerInputMessage(Message message){
@@ -41,53 +40,67 @@ public class TurAlBotServiceImp implements TurAlBotService{
         if (message.getText().equals("/stop")){
             return stopChat(message.getChatId());
         }
-        if (isProgress.get(message.getChatId())==null){
-            System.out.println(message.getChatId());
+        Session session = sessionService.findByChatId(message.getChatId());
+        if (session==null){
             return returnNotification(message.getChatId(),"finish");
         }
-        Action botState = currentAction.get(message.getChatId());
-        if (!correctAnswerOrNot(botState.getQuestion().getId(),message.getChatId(),message.getText())
-                &&botState.getType().equals("button")){
+        if (!correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),session.getChatId(),message.getText())
+                &&session.getCurrentAction().getType().equals("button")){
             return returnNotification(message.getChatId(),"wrongAnswer");
         }
-        if (botState.getQuestion().getRegex()!=null){
-            if (!Utils.regexForData(message.getText().trim(),botState.getQuestion().getRegex())){
-                return returnNotification(message.getChatId(),botState.getQuestion().getTypeOfNotification());
+        if (session.getCurrentAction().getQuestion().getRegex()!=null){
+            if (!Utils.regexForData(message.getText().trim(),session.getCurrentAction().getQuestion().getRegex())){
+                return returnNotification(message.getChatId(),session.getCurrentAction().getQuestion().getTypeOfNotification());
             }
         }
-        if (botState.getNextId()==null){
+        if (session.getCurrentAction().getNextId()==null){
             return returnNotification(message.getChatId(),"wait");
         }
-        questionsAndAnswers.get(message.getChatId()).
-                put(botState.getQuestion().getKeyWord(),message.getText());
-        sendMessage = getQuestion(currentAction.get(message.getChatId()).getNextId(),currentLanguage.get(message.getChatId()),null, message.getChatId());
-        sendMessage.setChatId(message.getChatId());
+        session.getQuestionsAndAnswers()
+                .put(session.getCurrentAction().getQuestion().getKeyWord(),message.getText());
+        sessionService.saveSession(message.getChatId(),session.getCurrentAction()
+                ,session.getIsProgress(),session.getCurrentLanguage()
+                ,session.getQuestionsAndAnswers(),false);
+        sendMessage = getQuestion(session.getCurrentAction().getNextId(),session.getCurrentLanguage(),null, session.getChatId());
+        sendMessage.setChatId(session.getChatId());
         return sendMessage;
     }
 
     @Override
     public SendMessage stopChat(Long chatId) {
-        Boolean isProgressOrNpt = isProgress.get(chatId);
-        if (isProgressOrNpt!=null){
-            isProgress.put(chatId,null);
-            Requests findRequest = requestDAO.getRequestByIsActiveAndChatId(chatId,true);
-            return returnNotification(chatId,"stop");
+        Session session  = sessionService.findByChatId(chatId);
+        try{
+            if (session!=null){
+                if (session.getCurrentAction().getNextId()!=null){
+                    SendMessage sendMessage = returnNotification(chatId,"stop");
+                    sessionService.delete(session);
+                    return sendMessage;
+                }
+                Requests requests = requestDAO.getRequestByIsActiveAndChatId(chatId,true);
+                SendMessage sendMessage = returnNotification(chatId,"stop");
+                sessionService.delete(session);
+                return sendMessage;
+            }
+            else {
+                return returnNotification(chatId,"finish");
+            }
         }
-        else {
-            return returnNotification(chatId,"finish");
+        catch (Exception ex){
+            sessionService.delete(session);
+            return new SendMessage();
         }
     }
 
     @Override
     public SendMessage startChat(Long chatId) {
-        if (isProgress.get(chatId)!=null){
+        Session session = sessionService.findByChatId(chatId);
+        if (session!=null){
             return returnNotification(chatId,"progress");
         }
         Action currentState = actionsRepo.findActionWithQId(1l);
         Language language  = languageRepo.getById(1l);
-        currentAction.put(chatId,currentState);
-        currentLanguage.put(chatId,language);
-        isProgress.put(chatId,true);
+        System.out.println(language.getLanguageName());
+        sessionService.saveSession(chatId,currentState,true, language, new HashMap<>(),true);
         SendMessage sendMessage = new SendMessage();
         sendMessage = getQuestion(1l,language,null,chatId);
         sendMessage.setChatId(chatId);
@@ -96,12 +109,15 @@ public class TurAlBotServiceImp implements TurAlBotService{
 
     @Override
     public SendMessage returnNotification(long chatId, String type){
-        Language language = currentLanguage.get(chatId);
+        Session session = sessionService.findByChatId(chatId);
+        Language language;
         long langId;
-        if (language==null){
+        if (session==null||(session!=null&&session.getCurrentLanguage()==null)){
             langId = 1l;
         }else {
+            language = session.getCurrentLanguage();
             langId = language.getId();
+            System.out.println(language.getLanguageName()+"  notification");
         }
         Notification notification = notificationRepo
                     .getNotificationByLangAndType(langId,type);
@@ -113,52 +129,57 @@ public class TurAlBotServiceImp implements TurAlBotService{
 
     @Override
     public BotApiMethod<?> processCallBack(CallbackQuery callbackQuery){
-        if (isProgress.get(callbackQuery.getMessage().getChatId())==null){
+        Session session = sessionService.findByChatId(callbackQuery.getMessage().getChatId());
+        if (session==null){
             SendMessage notification = returnNotification(callbackQuery.getMessage().getChatId(),"finish");
            return answerCallBackQuery(notification.getText(),true,callbackQuery.getId());
         }
-        Action botState = currentAction.get(callbackQuery.getMessage().getChatId());
-        boolean isCorrectAnswer = correctAnswerOrNot(botState.getQuestion().getId(),callbackQuery.getMessage().getChatId(), callbackQuery.getData());
+        boolean isCorrectAnswer = correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),callbackQuery.getMessage().getChatId(), callbackQuery.getData());
         if (!isCorrectAnswer){
             SendMessage notification = returnNotification(callbackQuery.getMessage().getChatId(),"wrongAnswer");
             return answerCallBackQuery(notification.getText(), true, callbackQuery.getId());
         }
         Map<String, String> questionStringMap = new HashMap<>();
         SendMessage callBackAnswer = null;
-        long qId = botState.getNextId();
-        if (botState.getQuestion().getId()==1){
+        long qId = session.getCurrentAction().getNextId();
+        if (session.getCurrentAction().getQuestion().getId()==1){
             Language language = languageRepo.getById(Long.parseLong(callbackQuery.getData()));
-            currentLanguage.put(callbackQuery.getMessage().getChatId(),language);
-            questionsAndAnswers.put(callbackQuery.getMessage().getChatId(),questionStringMap);
+            System.out.println(language.getLanguageName());
+            session.setCurrentLanguage(language);
+            sessionService.updateSession(callbackQuery.getMessage().getChatId(),session.getCurrentAction(),session.getIsProgress()
+                    ,session.getCurrentLanguage(),session.getQuestionsAndAnswers());
         }
         if (callbackQuery.getData().equals("isPass")){
             Action action  = actionsRepo.findActionWithQId(qId);
             callBackAnswer = getQuestion(action.getNextId()
-                    ,currentLanguage.get(callbackQuery.getMessage().getChatId()),null,callbackQuery.getMessage().getChatId());
+                    ,session.getCurrentLanguage(),null,callbackQuery.getMessage().getChatId());
             callBackAnswer.setChatId(callbackQuery.getMessage().getChatId());
-
-            saveData(callbackQuery.getMessage().getChatId(),botState.getQuestion().getKeyWord(),callbackQuery.getData());
+            saveData(callbackQuery.getMessage().getChatId(),session.getCurrentAction().getQuestion().getKeyWord(),callbackQuery.getData());
             return callBackAnswer;
         }
         callBackAnswer = getQuestion(qId
-                ,currentLanguage.get(callbackQuery.getMessage().getChatId()),null,callbackQuery.getMessage().getChatId());
-        callBackAnswer.setChatId(callbackQuery.getMessage().getChatId());
-        saveData(callbackQuery.getMessage().getChatId(),botState.getQuestion().getKeyWord(),callbackQuery.getData());
+                ,session.getCurrentLanguage(),null,callbackQuery.getMessage().getChatId());
+        callBackAnswer.setChatId(session.getChatId());
+        saveData(callbackQuery.getMessage().getChatId(),session.getCurrentAction().getQuestion().getKeyWord(),callbackQuery.getData());
         return callBackAnswer;
     }
 
     @Override
-    public Map<String, String> questionsAndAnswers(long chatId) {
-        return questionsAndAnswers.get(chatId);
+    public Map<String, String> getQuestionsAndAnswers(long chatId) {
+        Session session = sessionService.findByChatId(chatId);
+        return session.getQuestionsAndAnswers();
     }
 
     @Override
     public void saveData(long chatId, String keyWord, String callBackData){
+        Session session = sessionService.findByChatId(chatId);
         Button findButton = buttonsRepo.getButtonWithCallBackAndLangId(callBackData
                 ,1l);
         if (keyWord!=null){
-            questionsAndAnswers.get(chatId)
-                    .put(keyWord,findButton.getKeyWord());
+            session.getQuestionsAndAnswers().put(keyWord,findButton.getKeyWord());
+            sessionService.updateSession(chatId,session.getCurrentAction()
+                    ,session.getIsProgress(),session.getCurrentLanguage()
+                    ,session.getQuestionsAndAnswers());
         }
     }
 
@@ -185,7 +206,8 @@ public class TurAlBotServiceImp implements TurAlBotService{
 
     @Override
     public boolean correctAnswerOrNot(long questionId, long chatId,String data) {
-        Language lang = currentLanguage.get(chatId);
+        Session session = sessionService.findByChatId(chatId);
+        Language lang = session.getCurrentLanguage();
         List<Button> buttonList = buttonsRepo.getButtons(questionId,lang.getId());
         Optional<Button> findButton = buttonList.stream()
                 .filter(button -> button.getButtonCallBack()
@@ -230,19 +252,22 @@ public class TurAlBotServiceImp implements TurAlBotService{
         if(action.getNextId()==null){
             saveRequest(chatId);
         }
-        currentAction.put(chatId,action);
+        Session session = sessionService.findByChatId(chatId);
+        session.setCurrentAction(action);
+        sessionService.saveSession(session.getChatId(),session.getCurrentAction(),session.getIsProgress(),
+                session.getCurrentLanguage(),session.getQuestionsAndAnswers(),false);
         return sendMessage;
     }
 
     public Requests saveRequest(Long chatId){
+        Session session = sessionService.findByChatId(chatId);
         StringBuffer jsonText = new StringBuffer();
-        jsonText.append("{");
-        questionsAndAnswers.get(chatId).entrySet().forEach(w->{
+        jsonText.append("{"+"UUID"+':'+'"'+session.getUUID()+'"'+",");
+        session.getQuestionsAndAnswers().entrySet().forEach(w->{ //empty
             jsonText.append('"'+w.getKey()+'"'+':'+'"'+w.getValue()+'"').append(',');
         });
         jsonText.append("}").deleteCharAt(jsonText.lastIndexOf(","));
         Requests requests = requestDAO.saveRequest(chatId, jsonText.toString());
-        System.out.println(requests.getJsonText());
         return requests;
     }
 

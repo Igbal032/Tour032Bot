@@ -1,6 +1,6 @@
 package az.code.turalbot.handlers;
 
-import az.code.turalbot.cache.UserDataCache;
+//import az.code.turalbot.cache.UserDataCache;
 import az.code.turalbot.models.Action;
 import az.code.turalbot.repos.ActionsRepo;
 import az.code.turalbot.services.TurAlBotService;
@@ -22,6 +22,7 @@ public class TelegramFacade {
     public BotApiMethod<?> handlerUpdate(Update update){
         SendMessage reply  = null;
         if (update.hasCallbackQuery()){
+            System.out.println(" callback e dushdu");
             CallbackQuery callbackQuery = update.getCallbackQuery();
             return turAlBotService.processCallBack(callbackQuery);
         }

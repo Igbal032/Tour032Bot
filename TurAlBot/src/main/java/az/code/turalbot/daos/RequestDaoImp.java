@@ -19,6 +19,7 @@ public class RequestDaoImp implements RequestDAO{
         Requests findRequest = requestRepo.getRequestByIsActiveAndChatId(chatId,true);
         findRequest.setActive(false);
         requestRepo.save(findRequest);
+        System.out.println("save" + findRequest.isActive());
         return findRequest;
     }
 
