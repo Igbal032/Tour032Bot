@@ -4,6 +4,6 @@ import az.code.turalbot.models.Requests;
 
 public interface RequestDAO {
     Requests getRequestByIsActiveAndChatId(Long chatId,boolean isActive);
-
-    Requests saveRequest(Long chatId, String jsonText);
+    Requests getWithUUID(String UUID);
+    Requests saveRequest(Long chatId, String jsonText,String UUID);
 }

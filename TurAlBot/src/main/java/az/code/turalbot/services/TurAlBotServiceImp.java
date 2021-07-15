@@ -58,9 +58,9 @@ public class TurAlBotServiceImp implements TurAlBotService{
         }
         session.getQuestionsAndAnswers()
                 .put(session.getCurrentAction().getQuestion().getKeyWord(),message.getText());
-        sessionService.saveSession(message.getChatId(),session.getCurrentAction()
+        sessionService.updateSession(message.getChatId(),session.getCurrentAction()
                 ,session.getIsProgress(),session.getCurrentLanguage()
-                ,session.getQuestionsAndAnswers(),false);
+                ,session.getQuestionsAndAnswers());
         sendMessage = getQuestion(session.getCurrentAction().getNextId(),session.getCurrentLanguage(),null, session.getChatId());
         sendMessage.setChatId(session.getChatId());
         return sendMessage;
@@ -81,9 +81,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
                 sessionService.delete(session);
                 return sendMessage;
             }
-            else {
-                return returnNotification(chatId,"finish");
-            }
+            return returnNotification(chatId,"finish");
         }
         catch (Exception ex){
             sessionService.delete(session);
@@ -139,7 +137,6 @@ public class TurAlBotServiceImp implements TurAlBotService{
             SendMessage notification = returnNotification(callbackQuery.getMessage().getChatId(),"wrongAnswer");
             return answerCallBackQuery(notification.getText(), true, callbackQuery.getId());
         }
-        Map<String, String> questionStringMap = new HashMap<>();
         SendMessage callBackAnswer = null;
         long qId = session.getCurrentAction().getNextId();
         if (session.getCurrentAction().getQuestion().getId()==1){
@@ -254,20 +251,20 @@ public class TurAlBotServiceImp implements TurAlBotService{
         }
         Session session = sessionService.findByChatId(chatId);
         session.setCurrentAction(action);
-        sessionService.saveSession(session.getChatId(),session.getCurrentAction(),session.getIsProgress(),
-                session.getCurrentLanguage(),session.getQuestionsAndAnswers(),false);
+        sessionService.updateSession(session.getChatId(),session.getCurrentAction(),session.getIsProgress(),
+                session.getCurrentLanguage(),session.getQuestionsAndAnswers());
         return sendMessage;
     }
 
     public Requests saveRequest(Long chatId){
         Session session = sessionService.findByChatId(chatId);
         StringBuffer jsonText = new StringBuffer();
-        jsonText.append("{"+"UUID"+':'+'"'+session.getUUID()+'"'+",");
+        jsonText.append("{"+'"'+"UUID"+'"'+':'+'"'+session.getUUID()+'"'+",");
         session.getQuestionsAndAnswers().entrySet().forEach(w->{ //empty
             jsonText.append('"'+w.getKey()+'"'+':'+'"'+w.getValue()+'"').append(',');
         });
         jsonText.append("}").deleteCharAt(jsonText.lastIndexOf(","));
-        Requests requests = requestDAO.saveRequest(chatId, jsonText.toString());
+        Requests requests = requestDAO.saveRequest(chatId, jsonText.toString(),session.getUUID());
         return requests;
     }
 

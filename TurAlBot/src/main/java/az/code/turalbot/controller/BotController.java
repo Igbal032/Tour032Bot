@@ -16,8 +16,6 @@ import java.util.Map;
 public class BotController {
 
     private final TurAlTelegramBot turAlTelegramBot;
-    @Autowired
-    private TurAlBotService turAlBotService;
     public BotController(TurAlTelegramBot turAlTelegramBot) {
         this.turAlTelegramBot = turAlTelegramBot;
     }

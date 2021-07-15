@@ -22,7 +22,6 @@ public class TelegramFacade {
     public BotApiMethod<?> handlerUpdate(Update update){
         SendMessage reply  = null;
         if (update.hasCallbackQuery()){
-            System.out.println(" callback e dushdu");
             CallbackQuery callbackQuery = update.getCallbackQuery();
             return turAlBotService.processCallBack(callbackQuery);
         }
@@ -30,7 +29,6 @@ public class TelegramFacade {
         if (message!=null&&message.hasText()){
             reply = turAlBotService.handlerInputMessage(message);
         }
-
         return reply;
     }
 }

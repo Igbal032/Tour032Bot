@@ -25,6 +25,7 @@ public class SessionServiceImp implements SessionService{
                 .isProgress(isProgress)
                 .currentLanguage(language)
                 .build();
+        System.out.println(session.getUUID()+" START UUID");
         return sessionCash.save(session);
     }
 

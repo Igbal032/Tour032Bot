@@ -1,5 +1,6 @@
 package az.code.turalbot.daos;
 
+import az.code.turalbot.Exceptions.RequestNotFoundException;
 import az.code.turalbot.models.Requests;
 import az.code.turalbot.repos.RequestRepo;
 import az.code.turalbot.utils.GenerateUUID;
@@ -24,9 +25,18 @@ public class RequestDaoImp implements RequestDAO{
     }
 
     @Override
-    public Requests saveRequest(Long chatId, String jsonText) {
+    public Requests getWithUUID(String UUID) {
+        Requests request   = requestRepo.getRequestsByUUID(UUID);
+        if (request==null){
+            throw new RequestNotFoundException("Request not found");
+        }
+        return request;
+    }
+
+    @Override
+    public Requests saveRequest(Long chatId, String jsonText,String UUID) {
         Requests newRequests = Requests.builder()
-                .UUID(GenerateUUID.generateUUID())
+                .UUID(UUID)
                 .chatId(chatId)
                 .isActive(true)
                 .jsonText(jsonText)
