@@ -1,5 +1,6 @@
 package az.code.turalbot;
 
+import az.code.turalbot.dtos.OfferDTO;
 import az.code.turalbot.handlers.TelegramFacade;
 import az.code.turalbot.models.Offer;
 import az.code.turalbot.models.Session;
@@ -50,10 +51,10 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
     }
 
     @RabbitListener(queues = "senderQueue")
-    public void sendPhotoToTelegram(Offer offer) {
+    public void sendPhotoToTelegram(OfferDTO offer) {
         SendPhoto msg = new SendPhoto()
                 .setChatId(offer.getChatId())
-                .setPhoto(new InputFile(new ByteArrayInputStream(offer.getFile()),"sasa"));
+                .setPhoto(new InputFile(new ByteArrayInputStream(offer.getFile()),offer.getUUID()));
         try {
             execute(msg);
         } catch (TelegramApiException e) {
