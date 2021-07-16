@@ -1,5 +1,6 @@
 package az.code.turalbot.services;
 
+import az.code.turalbot.cache.Cash;
 import az.code.turalbot.daos.RequestDAO;
 import az.code.turalbot.models.*;
 import az.code.turalbot.repos.*;
@@ -30,6 +31,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
     private final NotificationRepo notificationRepo;
     private final RequestDAO requestDAO;
     private final SessionService sessionService;
+    private final Cash keepCount;
 
     @Override
     public  SendMessage handlerInputMessage(Message message){
@@ -79,12 +81,14 @@ public class TurAlBotServiceImp implements TurAlBotService{
                 Requests requests = requestDAO.getRequestByIsActiveAndChatId(chatId,true);
                 SendMessage sendMessage = returnNotification(chatId,"stop");
                 sessionService.delete(session);
+                keepCount.reset(chatId);
                 return sendMessage;
             }
             return returnNotification(chatId,"finish");
         }
         catch (Exception ex){
             sessionService.delete(session);
+            keepCount.reset(chatId);
             return new SendMessage();
         }
     }
@@ -245,6 +249,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
         else if (action.getType().equals("end")){
             Translate translate =  translateRepo.getTranslate(language.getId(), questionId);
             sendMessage.setText(translate.getTranslatedContent());
+            System.out.println("salam end ");
         }
         if(action.getNextId()==null){
             saveRequest(chatId);
@@ -258,6 +263,8 @@ public class TurAlBotServiceImp implements TurAlBotService{
 
     public Requests saveRequest(Long chatId){
         Session session = sessionService.findByChatId(chatId);
+        Integer cash = keepCount.save(chatId,0);
+        System.out.println(" count is "+keepCount.findByChatId(chatId));
         StringBuffer jsonText = new StringBuffer();
         jsonText.append("{"+'"'+"UUID"+'"'+':'+'"'+session.getUUID()+'"'+",");
         session.getQuestionsAndAnswers().entrySet().forEach(w->{ //empty

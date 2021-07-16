@@ -20,7 +20,6 @@ public class SessionCashImpl implements SessionCash {
     private static final String hashKey = "session";
     public Session save(Session session){
         redisTemplate.opsForHash().put(hashKey,session.getChatId(),session);
-        System.out.println(findByChatId(session.getChatId()).getCurrentLanguage().getLanguageName()+"  - salam");
         return session;
     }
 

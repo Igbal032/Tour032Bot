@@ -11,7 +11,8 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class OfferDTO implements Serializable {
     private Long chatId;
-    private Long messageId;
+    private Integer messageId;
+    private String CompanyName;
     private String UUID;
     private byte[] file;
 }

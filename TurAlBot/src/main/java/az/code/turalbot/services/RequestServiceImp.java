@@ -43,7 +43,7 @@ public class RequestServiceImp implements RequestService{
                 .chatId(requests.getChatId())
                 .file(file.getBytes())
                 .build();
-        template.convertAndSend(exchange.getName(),senderKey,offer); //todo
+        template.convertAndSend(exchange.getName(),senderKey,offer);
         return Response.ok();
     }
 }
