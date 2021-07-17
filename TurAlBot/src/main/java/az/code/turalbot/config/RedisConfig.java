@@ -1,6 +1,6 @@
 package az.code.turalbot.config;
 
-import az.code.turalbot.models.Session;
+import az.code.turalbot.cache.Session;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;

@@ -1,12 +1,7 @@
 package az.code.turalbot.cache;
 
-import az.code.turalbot.models.Session;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
 @Repository
 public class SessionCashImpl implements SessionCash {
@@ -17,7 +12,7 @@ public class SessionCashImpl implements SessionCash {
         this.redisTemplate = redisTemplate;
     }
 
-    private static final String hashKey = "session";
+    private static final String hashKey = "session32";
     public Session save(Session session){
         redisTemplate.opsForHash().put(hashKey,session.getChatId(),session);
         return session;

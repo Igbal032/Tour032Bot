@@ -2,6 +2,9 @@ package az.code.turalbot.controller;
 
 import az.code.turalbot.Exceptions.RequestNotFoundException;
 import az.code.turalbot.TurAlTelegramBot;
+import az.code.turalbot.cache.Cache;
+import az.code.turalbot.cache.ImageCache;
+import az.code.turalbot.cache.Session;
 import az.code.turalbot.models.Question;
 import az.code.turalbot.models.Requests;
 import az.code.turalbot.services.RequestService;
@@ -28,22 +31,26 @@ import java.util.List;
 public class UserController {
     private final TurAlBotService turAlBotService;
     private final RequestService requestService;
+    private final Cache cache;
     private final TurAlTelegramBot turAlTelegramBot;
     @GetMapping("/info")
     public ResponseEntity<String> getAnswers(@RequestParam String uuid) {
         Requests requests = requestService.getRequestWithUUID(uuid);
         return new ResponseEntity<>(requests.getJsonText(),HttpStatus.OK);
     }
+    @PostMapping("/access")
+    public ResponseEntity<String> access(@RequestParam String uuid) {
+        turAlTelegramBot.removeMessage(6187,1054087888l,new Session());
+        return new ResponseEntity<>("OK",HttpStatus.OK);
+    }
     @PostMapping("/clients")
     public ResponseEntity<String> sendImage(@RequestParam String uuid, @RequestParam("file") MultipartFile file) throws IOException {
-        System.out.println(file.getOriginalFilename()+" file name");
         Requests requests = requestService.getRequestWithUUID(uuid);
         if (requests==null){
             throw new RequestNotFoundException("Request not found!!");
         }
         if (requests.isActive()){
             requestService.sendDataToRabBitMQ(uuid,file);
-//            turAlTelegramBot.sendPhotoToTelegram(requests.getChatId(),file);
             return new ResponseEntity<>("Image was send to queue",HttpStatus.OK);
         }
         else {

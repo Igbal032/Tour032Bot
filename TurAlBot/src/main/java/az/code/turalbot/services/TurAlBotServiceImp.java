@@ -1,14 +1,15 @@
 package az.code.turalbot.services;
 
-import az.code.turalbot.cache.Cash;
+import az.code.turalbot.TurAlTelegramBot;
+import az.code.turalbot.cache.Cache;
+import az.code.turalbot.cache.ImageCache;
+import az.code.turalbot.cache.Session;
 import az.code.turalbot.daos.RequestDAO;
 import az.code.turalbot.models.*;
+import az.code.turalbot.models.Button;
 import az.code.turalbot.repos.*;
-import az.code.turalbot.utils.GenerateUUID;
 import az.code.turalbot.utils.Utils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -19,6 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.*;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +32,9 @@ public class TurAlBotServiceImp implements TurAlBotService{
     private final ButtonsRepo buttonsRepo;
     private final NotificationRepo notificationRepo;
     private final RequestDAO requestDAO;
+    private final TurAlTelegramBot turAlTelegramBot;
     private final SessionService sessionService;
-    private final Cash keepCount;
+    private final Cache imageCache;
 
     @Override
     public  SendMessage handlerInputMessage(Message message){
@@ -78,17 +81,18 @@ public class TurAlBotServiceImp implements TurAlBotService{
                     sessionService.delete(session);
                     return sendMessage;
                 }
-                Requests requests = requestDAO.getRequestByIsActiveAndChatId(chatId,true);
+                Requests requests = requestDAO.deactivateStatus(session.getUUID());
                 SendMessage sendMessage = returnNotification(chatId,"stop");
                 sessionService.delete(session);
-                keepCount.reset(chatId);
+                imageCache.delete(imageCache.findByUUID(session.getUUID()));
                 return sendMessage;
             }
             return returnNotification(chatId,"finish");
         }
         catch (Exception ex){
+            System.out.println("error during stop");
             sessionService.delete(session);
-            keepCount.reset(chatId);
+            imageCache.delete(imageCache.findByUUID(session.getUUID()));
             return new SendMessage();
         }
     }
@@ -135,6 +139,9 @@ public class TurAlBotServiceImp implements TurAlBotService{
         if (session==null){
             SendMessage notification = returnNotification(callbackQuery.getMessage().getChatId(),"finish");
            return answerCallBackQuery(notification.getText(),true,callbackQuery.getId());
+        }
+        if (callbackQuery.getData().equals("more")){
+            return turAlTelegramBot.sendMoreOffer(session);
         }
         boolean isCorrectAnswer = correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),callbackQuery.getMessage().getChatId(), callbackQuery.getData());
         if (!isCorrectAnswer){
@@ -234,22 +241,18 @@ public class TurAlBotServiceImp implements TurAlBotService{
             List<Button> buttonList=null;
             if (questionId==1){
                 sendMessage.setText(action.getQuestion().getContent());
-            }
-            else{
+            }else{
                 Translate translate = translateRepo.getTranslate(language.getId(),action.getQuestion().getId());
                 sendMessage.setText(translate.getTranslatedContent());
             }
             buttonList = buttonsRepo.getButtons(questionId,language.getId());
             sendMessage.setReplyMarkup(createButtons(buttonList));
-        }
-        else if (action.getType().equals("freetext")){
+        }else if (action.getType().equals("freetext")){
             Translate translate =  translateRepo.getTranslate(language.getId(), questionId);
             sendMessage.setText(translate.getTranslatedContent());
-        }
-        else if (action.getType().equals("end")){
+        }else if (action.getType().equals("end")){
             Translate translate =  translateRepo.getTranslate(language.getId(), questionId);
             sendMessage.setText(translate.getTranslatedContent());
-            System.out.println("salam end ");
         }
         if(action.getNextId()==null){
             saveRequest(chatId);
@@ -263,16 +266,25 @@ public class TurAlBotServiceImp implements TurAlBotService{
 
     public Requests saveRequest(Long chatId){
         Session session = sessionService.findByChatId(chatId);
-        Integer cash = keepCount.save(chatId,0);
-        System.out.println(" count is "+keepCount.findByChatId(chatId));
         StringBuffer jsonText = new StringBuffer();
-        jsonText.append("{"+'"'+"UUID"+'"'+':'+'"'+session.getUUID()+'"'+",");
+        jsonText.append("{");
         session.getQuestionsAndAnswers().entrySet().forEach(w->{ //empty
             jsonText.append('"'+w.getKey()+'"'+':'+'"'+w.getValue()+'"').append(',');
         });
         jsonText.append("}").deleteCharAt(jsonText.lastIndexOf(","));
         Requests requests = requestDAO.saveRequest(chatId, jsonText.toString(),session.getUUID());
+        addImageCache(chatId,session.getUUID());
         return requests;
+    }
+
+    public void addImageCache(Long chatId, String UUID){
+        imageCache.save(ImageCache.builder()
+                .chatId(chatId)
+                .UUID(UUID)
+                .countOfAllImages(0)
+                .isAccess(true)
+                .build()
+        );
     }
 
 }

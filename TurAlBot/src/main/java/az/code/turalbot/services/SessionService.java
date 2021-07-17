@@ -2,7 +2,7 @@ package az.code.turalbot.services;
 
 import az.code.turalbot.models.Action;
 import az.code.turalbot.models.Language;
-import az.code.turalbot.models.Session;
+import az.code.turalbot.cache.Session;
 
 import java.util.Map;
 

@@ -16,8 +16,8 @@ public class RequestDaoImp implements RequestDAO{
     private final RequestRepo requestRepo;
 
     @Override
-    public Requests getRequestByIsActiveAndChatId(Long chatId, boolean isActive) {
-        Requests findRequest = requestRepo.getRequestByIsActiveAndChatId(chatId,true);
+    public Requests deactivateStatus(String UUID) {
+        Requests findRequest = requestRepo.getRequestsByUUID(UUID);
         findRequest.setActive(false);
         requestRepo.save(findRequest);
         System.out.println("save" + findRequest.isActive());

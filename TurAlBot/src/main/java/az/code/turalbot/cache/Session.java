@@ -1,7 +1,9 @@
-package az.code.turalbot.models;
+package az.code.turalbot.cache;
 
+import az.code.turalbot.models.Action;
+import az.code.turalbot.models.Language;
+import az.code.turalbot.models.Question;
 import lombok.*;
-import org.checkerframework.checker.signature.qual.PrimitiveType;
 
 import java.io.Serializable;
 import java.util.HashMap;
