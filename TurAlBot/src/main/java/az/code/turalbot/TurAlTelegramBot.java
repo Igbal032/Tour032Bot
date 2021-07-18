@@ -23,13 +23,8 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +67,6 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
         Session session = sessionCash.findByChatId(offerDTO.getChatId());
         if (cache.findByUUID(offerDTO.getUUID()).getCountOfSendingImage()%5==0
                 &&isAccessOrNot(session.getUUID())==false){
-            saveImage(offerDTO.getUUID(),offerDTO.getFile());
             offerService.createOffer(offerDTO,null,false);
             if (cache.findByUUID(offerDTO.getUUID()).getButtonId()==null){
                 createMoreButton(session);
@@ -81,10 +75,13 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
         }
         else {
             try {
-                incrCountOfSendingImage(offerDTO.getUUID());
+                Integer cnt = incrCountOfSendingImage(offerDTO.getUUID());
+                if (cnt==1){
+                   execute(turAlBotService.returnNotification(session.getChatId(),"selectOffer"));
+                }
                 SendPhoto msg = new SendPhoto()
                         .setChatId(offerDTO.getChatId())
-                        .setCaption(offerDTO.getCompanyName())
+                        .setCaption("Company Name")
                         .setPhoto(new InputFile(new ByteArrayInputStream(offerDTO.getFile()),offerDTO.getUUID()));
                 Message message = execute(msg);
                 offerDTO.toBuilder().messageId(message.getMessageId()).build();
@@ -98,6 +95,7 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
                 return null;
             }
         }
+
     }
 
     public boolean isExistOffer(OfferDTO offerDTO){
@@ -190,14 +188,9 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
                 .isAccess(false)
                 .build();
         cache.save(imageCache);
-        return imageCache.getCountOfAllImages();
+        return imageCache.getCountOfSendingImage();
     }
 
-    public void saveImage(String name, byte[] imgByte) throws IOException {
-        BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgByte));
-        File f = new File("image/"+name+".jpg");
-        ImageIO.write(img, "jpg", f);
-    }
     @Override
     public String getBotUsername() {
         return userName;

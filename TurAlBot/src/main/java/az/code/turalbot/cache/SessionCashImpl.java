@@ -12,7 +12,7 @@ public class SessionCashImpl implements SessionCash {
         this.redisTemplate = redisTemplate;
     }
 
-    private static final String hashKey = "session32";
+    private static final String hashKey = "sessionn";
     public Session save(Session session){
         redisTemplate.opsForHash().put(hashKey,session.getChatId(),session);
         return session;

@@ -25,6 +25,7 @@ public class RabbitMQConfig {
         return new TopicExchange("default");
     }
 
+
     @Bean
     Queue senderQueue(){
         return new Queue("senderQueue", true);
@@ -34,6 +35,21 @@ public class RabbitMQConfig {
     Binding senderBinding(Queue senderQueue, TopicExchange exchange){
         return BindingBuilder.bind(senderQueue).to(exchange).with("senderKey");
     }
+
+//    @Bean
+//    TopicExchange exchange2() {
+//        return new TopicExchange("default2");
+//    }
+
+//    @Bean
+//    Queue receiverQueue(){
+//        return new Queue("receiveQueue", true);
+//    }
+//
+//    @Bean
+//    Binding receiverBinding(Queue senderQueue, TopicExchange exchange){
+//        return BindingBuilder.bind(senderQueue).to(exchange).with("receiveKey");
+//    }
 
     @Bean
     public MessageConverter jsonMessageConverter(){
@@ -46,15 +62,4 @@ public class RabbitMQConfig {
         rabbitTemplate.setMessageConverter(jsonMessageConverter());
         return rabbitTemplate;
     }
-
-    //    @Bean
-//    Queue receiverQueue() {
-//        return new Queue(receiverQueue, true);
-//    }
-
-
-//    @Bean
-//    Binding receiverBinding(Queue receiverQueue, DirectExchange exchange){
-//        return BindingBuilder.bind(receiverQueue).to(exchange).with(receiverKey);
-//    }
 }
