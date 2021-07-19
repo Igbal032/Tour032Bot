@@ -4,10 +4,13 @@ import az.code.turalbot.TurAlTelegramBot;
 import az.code.turalbot.cache.Cache;
 import az.code.turalbot.cache.ImageCache;
 import az.code.turalbot.cache.Session;
-import az.code.turalbot.daos.RequestDAO;
+import az.code.turalbot.daos.intergaces.RequestDAO;
 import az.code.turalbot.models.*;
 import az.code.turalbot.models.Button;
 import az.code.turalbot.repos.*;
+import az.code.turalbot.services.interfaces.OfferService;
+import az.code.turalbot.services.interfaces.SessionService;
+import az.code.turalbot.services.interfaces.TurAlBotService;
 import az.code.turalbot.utils.Utils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +27,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class TurAlBotServiceImp implements TurAlBotService{
+public class TurAlBotServiceImp implements TurAlBotService {
 
     private final LanguageRepo languageRepo;
     private final ActionsRepo actionsRepo;
@@ -170,7 +173,8 @@ public class TurAlBotServiceImp implements TurAlBotService{
         if (callbackQuery.getData().equals("more")){
             return turAlTelegramBot.sendMoreOffer(session);
         }
-        boolean isCorrectAnswer = correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),callbackQuery.getMessage().getChatId(), callbackQuery.getData());
+        boolean isCorrectAnswer = correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),
+                callbackQuery.getMessage().getChatId(), callbackQuery.getData());
         if (!isCorrectAnswer){
             SendMessage notification = returnNotification(callbackQuery.getMessage().getChatId(),"wrongAnswer");
             return answerCallBackQuery(notification.getText(), true, callbackQuery.getId());

@@ -1,10 +1,7 @@
 package az.code.turalbot.handlers;
 
 //import az.code.turalbot.cache.UserDataCache;
-import az.code.turalbot.models.Action;
-import az.code.turalbot.repos.ActionsRepo;
-import az.code.turalbot.services.TurAlBotService;
-import az.code.turalbot.utils.GenerateUUID;
+import az.code.turalbot.services.interfaces.TurAlBotService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;

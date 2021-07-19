@@ -1,9 +1,9 @@
 package az.code.turalbot.daos;
 
 import az.code.turalbot.Exceptions.RequestNotFoundException;
+import az.code.turalbot.daos.intergaces.RequestDAO;
 import az.code.turalbot.models.Requests;
 import az.code.turalbot.repos.RequestRepo;
-import az.code.turalbot.utils.GenerateUUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
-public class RequestDaoImp implements RequestDAO{
+public class RequestDaoImp implements RequestDAO {
 
     private final RequestRepo requestRepo;
 
@@ -36,10 +36,8 @@ public class RequestDaoImp implements RequestDAO{
     @Override
     public Requests saveRequest(Long chatId, String jsonText,String UUID) {
         Requests newRequests = Requests.builder()
-                .UUID(UUID)
-                .chatId(chatId)
-                .isActive(true)
-                .jsonText(jsonText)
+                .UUID(UUID).chatId(chatId)
+                .isActive(true).jsonText(jsonText)
                 .createdDate(LocalDateTime.now())
                 .build();
         Requests requests =  requestRepo.save(newRequests);

@@ -1,14 +1,11 @@
 package az.code.turalbot.services;
 
-import az.code.turalbot.daos.OfferDAO;
+import az.code.turalbot.daos.intergaces.OfferDAO;
 import az.code.turalbot.dtos.OfferDTO;
 import az.code.turalbot.models.ConfirmOffer;
 import az.code.turalbot.models.Offer;
-import az.code.turalbot.repos.OfferRepo;
+import az.code.turalbot.services.interfaces.OfferService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

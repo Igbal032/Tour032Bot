@@ -3,27 +3,18 @@ package az.code.turalbot.controller;
 import az.code.turalbot.Exceptions.RequestNotFoundException;
 import az.code.turalbot.TurAlTelegramBot;
 import az.code.turalbot.cache.Cache;
-import az.code.turalbot.cache.ImageCache;
-import az.code.turalbot.cache.Session;
-import az.code.turalbot.models.Question;
 import az.code.turalbot.models.Requests;
-import az.code.turalbot.services.RequestService;
-import az.code.turalbot.services.SessionService;
-import az.code.turalbot.services.TurAlBotService;
+import az.code.turalbot.services.interfaces.RequestService;
+import az.code.turalbot.services.interfaces.TurAlBotService;
 
 import lombok.RequiredArgsConstructor;
 
-import org.glassfish.grizzly.utils.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api")

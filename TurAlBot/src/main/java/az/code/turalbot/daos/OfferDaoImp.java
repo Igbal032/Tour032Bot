@@ -1,21 +1,19 @@
 package az.code.turalbot.daos;
 
+import az.code.turalbot.daos.intergaces.OfferDAO;
 import az.code.turalbot.dtos.OfferDTO;
 import az.code.turalbot.models.ConfirmOffer;
 import az.code.turalbot.models.Offer;
 import az.code.turalbot.repos.ConfirmOfferRepo;
 import az.code.turalbot.repos.OfferRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class OfferDaoImp implements OfferDAO{
+public class OfferDaoImp implements OfferDAO {
 
     private final OfferRepo offerRepo;
     private final ConfirmOfferRepo confirmOfferRepo;

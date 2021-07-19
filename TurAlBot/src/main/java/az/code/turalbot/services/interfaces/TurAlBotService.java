@@ -1,4 +1,4 @@
-package az.code.turalbot.services;
+package az.code.turalbot.services.interfaces;
 
 import az.code.turalbot.models.Action;
 import az.code.turalbot.models.Button;

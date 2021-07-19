@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder(toBuilder = true)
 @Table(name = "translate")
 public class Translate {
 

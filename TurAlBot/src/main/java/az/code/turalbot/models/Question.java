@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder(toBuilder = true)
 @Table(name = "questions")
 public class Question  implements Serializable {
     @Id

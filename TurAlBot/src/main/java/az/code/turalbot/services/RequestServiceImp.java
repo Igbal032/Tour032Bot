@@ -1,21 +1,16 @@
 package az.code.turalbot.services;
 
-import az.code.turalbot.daos.RequestDAO;
+import az.code.turalbot.daos.intergaces.RequestDAO;
 import az.code.turalbot.dtos.OfferDTO;
-import az.code.turalbot.models.Offer;
 import az.code.turalbot.models.Requests;
+import az.code.turalbot.services.interfaces.RequestService;
+import az.code.turalbot.services.interfaces.TurAlBotService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.*;
@@ -23,7 +18,7 @@ import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
-public class RequestServiceImp implements RequestService{
+public class RequestServiceImp implements RequestService {
 
     private final RequestDAO requestDAO;
     private final RabbitTemplate template;
