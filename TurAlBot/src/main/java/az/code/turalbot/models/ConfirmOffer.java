@@ -24,7 +24,7 @@ public class ConfirmOffer {
     private Long chatId;
     private String companyName;
     private byte[] file;
-    private String phoneOrUserName;
+    private String phoneNumber;
     @CreationTimestamp
     private LocalDateTime createdDate;
 }

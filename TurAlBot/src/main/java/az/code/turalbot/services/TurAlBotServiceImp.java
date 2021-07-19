@@ -17,10 +17,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.util.*;
 import java.util.List;
@@ -55,20 +52,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
             return returnNotification(message.getChatId(),"finish");
         }
         if (session.getCurrentAction().getNextId()==null){
-            if (imageCache.findByUUID(session.getUUID()).getCountOfSendingImage()!=0){
-                if(message.getReplyToMessage()!=null){
-                    String result = confirmOffer(session.getUUID(),message.getReplyToMessage().getMessageId(),message.getText());
-                    if (result.equals("wrongPhoneNumber")){
-                        return returnNotification(message.getChatId(),"wrongPhoneNumber");
-                    }
-                    else if(result.equals("noMessageId")){
-                        return returnNotification(message.getChatId(),"correctReply");
-                    }
-                    return returnNotification(message.getChatId(),"willBeCalled");
-                }
-                return returnNotification(message.getChatId(),"selectOffer");
-            }
-            return returnNotification(message.getChatId(),"wait");
+            return handleNotifications(session, message);
         }
         if (!correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),session.getChatId(),message.getText())
                 &&session.getCurrentAction().getType().equals("button")){
@@ -79,13 +63,9 @@ public class TurAlBotServiceImp implements TurAlBotService{
                 return returnNotification(message.getChatId(),session.getCurrentAction().getQuestion().getTypeOfNotification());
             }
         }
-        session.getQuestionsAndAnswers()
-                .put(session.getCurrentAction().getQuestion().getKeyWord(),message.getText());
-        sessionService.updateSession(message.getChatId(),session.getCurrentAction()
-                ,session.getIsProgress(),session.getCurrentLanguage()
-                ,session.getQuestionsAndAnswers());
-        sendMessage = getQuestion(session.getCurrentAction().getNextId(),session.getCurrentLanguage(),
-                null, session.getChatId());
+        addAnswerToCache(session,message);
+        sendMessage = getQuestion(session.getCurrentAction().getNextId(),
+                session.getCurrentLanguage(),session.getChatId());
         sendMessage.setChatId(session.getChatId());
         return sendMessage;
     }
@@ -116,18 +96,33 @@ public class TurAlBotServiceImp implements TurAlBotService{
         }
     }
 
-    public String  confirmOffer(String UUID, Integer msjId,String phoneNumber){
-        return offerService.createConfirmOffer(msjId, UUID,phoneNumber);
+    public SendMessage handleNotifications(Session session, Message message){
+        if (imageCache.findByUUID(session.getUUID()).getCountOfSendingImage()!=0){
+            if(message.getReplyToMessage()!=null){
+                String result = confirmOffer(session.getUUID(),message.getReplyToMessage().getMessageId(),message.getText());
+                if (result.equals("wrongPhoneNumber")){
+                    return returnNotification(message.getChatId(),"wrongPhoneNumber");
+                }
+                else if(result.equals("noMessageId")){
+                    return returnNotification(message.getChatId(),"correctReply");
+                }
+                return returnNotification(message.getChatId(),"willBeCalled");
+            }
+            return returnNotification(message.getChatId(),"selectOffer");
+        }
+        return returnNotification(message.getChatId(),"wait");
     }
 
-    public int returnReplyMessageId(Message message){
-        try{
-            int ss = message.getReplyToMessage().getMessageId();
-            return ss;
-        }
-        catch (Exception ex){
-            return 0;
-        }
+    public void addAnswerToCache(Session session,Message message){
+        session.getQuestionsAndAnswers()
+                .put(session.getCurrentAction().getQuestion().getKeyWord(),message.getText());
+        sessionService.updateSession(message.getChatId(),session.getCurrentAction()
+                ,session.getIsProgress(),session.getCurrentLanguage()
+                ,session.getQuestionsAndAnswers());
+    }
+
+    public String  confirmOffer(String UUID, Integer msjId,String phoneNumber){
+        return offerService.createConfirmOffer(msjId, UUID,phoneNumber);
     }
 
     @Override
@@ -140,7 +135,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
         Language language  = languageRepo.getById(1l);
         sessionService.saveSession(chatId,currentState,true, language, new HashMap<>(),true);
         SendMessage sendMessage = new SendMessage();
-        sendMessage = getQuestion(1l,language,null,chatId);
+        sendMessage = getQuestion(1l,language,chatId);
         sendMessage.setChatId(chatId);
         return sendMessage;
     }
@@ -155,7 +150,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
         }else {
             language = session.getCurrentLanguage();
             langId = language.getId();
-            System.out.println(language.getLanguageName()+"  notification");
+            System.out.println(language.getLanguageName()+ "  notification");
         }
         Notification notification = notificationRepo
                     .getNotificationByLangAndType(langId,type);
@@ -170,7 +165,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
         Session session = sessionService.findByChatId(callbackQuery.getMessage().getChatId());
         if (session==null){
             SendMessage notification = returnNotification(callbackQuery.getMessage().getChatId(),"finish");
-           return answerCallBackQuery(notification.getText(),true,callbackQuery.getId());
+            return answerCallBackQuery(notification.getText(),true,callbackQuery.getId());
         }
         if (callbackQuery.getData().equals("more")){
             return turAlTelegramBot.sendMoreOffer(session);
@@ -186,21 +181,27 @@ public class TurAlBotServiceImp implements TurAlBotService{
             Language language = languageRepo.getById(Long.parseLong(callbackQuery.getData()));
             System.out.println(language.getLanguageName());
             session.setCurrentLanguage(language);
-            sessionService.updateSession(callbackQuery.getMessage().getChatId(),session.getCurrentAction(),session.getIsProgress()
+            sessionService.updateSession(callbackQuery.getMessage().getChatId()
+                    ,session.getCurrentAction(),session.getIsProgress()
                     ,session.getCurrentLanguage(),session.getQuestionsAndAnswers());
         }
         if (callbackQuery.getData().equals("isPass")){
             Action action  = actionsRepo.findActionWithQId(qId);
             callBackAnswer = getQuestion(action.getNextId()
-                    ,session.getCurrentLanguage(),null,callbackQuery.getMessage().getChatId());
+                    ,session.getCurrentLanguage(),callbackQuery.getMessage().getChatId());
             callBackAnswer.setChatId(callbackQuery.getMessage().getChatId());
-            saveData(callbackQuery.getMessage().getChatId(),session.getCurrentAction().getQuestion().getKeyWord(),callbackQuery.getData());
+            saveData(callbackQuery.getMessage().getChatId(),
+                    session.getCurrentAction().getQuestion().getKeyWord(),
+                    callbackQuery.getData());
             return callBackAnswer;
         }
         callBackAnswer = getQuestion(qId
-                ,session.getCurrentLanguage(),null,callbackQuery.getMessage().getChatId());
+                ,session.getCurrentLanguage(),
+                callbackQuery.getMessage().getChatId());
         callBackAnswer.setChatId(session.getChatId());
-        saveData(callbackQuery.getMessage().getChatId(),session.getCurrentAction().getQuestion().getKeyWord(),callbackQuery.getData());
+        saveData(callbackQuery.getMessage().getChatId(),
+                session.getCurrentAction().getQuestion().getKeyWord(),
+                callbackQuery.getData());
         return callBackAnswer;
     }
 
@@ -257,7 +258,8 @@ public class TurAlBotServiceImp implements TurAlBotService{
     }
 
     @Override
-    public AnswerCallbackQuery answerCallBackQuery(String message, boolean isShow, String callBackQueryId) {
+    public AnswerCallbackQuery answerCallBackQuery(String message, boolean isShow,
+                                                   String callBackQueryId) {
         AnswerCallbackQuery answerCallbackQuery = new AnswerCallbackQuery();
         answerCallbackQuery.setCallbackQueryId(callBackQueryId);
         answerCallbackQuery.setShowAlert(isShow);
@@ -266,7 +268,7 @@ public class TurAlBotServiceImp implements TurAlBotService{
     }
 
     @Override
-    public SendMessage getQuestion(long questionId, Language language,String UUID, Long chatId) {
+    public SendMessage getQuestion(long questionId, Language language, Long chatId) {
         Action action = actionsRepo.findActionWithQId(questionId);
         SendMessage sendMessage = new SendMessage();
         if (action.getType().equals("button")){
@@ -282,16 +284,14 @@ public class TurAlBotServiceImp implements TurAlBotService{
         }else if (action.getType().equals("freetext")){
             Translate translate =  translateRepo.getTranslate(language.getId(), questionId);
             sendMessage.setText(translate.getTranslatedContent());
-        }else if (action.getType().equals("end")){
-            Translate translate =  translateRepo.getTranslate(language.getId(), questionId);
-            sendMessage.setText(translate.getTranslatedContent());
-        }// check and delete
+        }
         if(action.getNextId()==null){
             saveRequest(chatId);
         }
         Session session = sessionService.findByChatId(chatId);
         session.setCurrentAction(action);
-        sessionService.updateSession(session.getChatId(),session.getCurrentAction(),session.getIsProgress(),
+        sessionService.updateSession(session.getChatId(),
+                session.getCurrentAction(),session.getIsProgress(),
                 session.getCurrentLanguage(),session.getQuestionsAndAnswers());
         return sendMessage;
     }
@@ -300,11 +300,12 @@ public class TurAlBotServiceImp implements TurAlBotService{
         Session session = sessionService.findByChatId(chatId);
         StringBuffer jsonText = new StringBuffer();
         jsonText.append("{");
-        session.getQuestionsAndAnswers().entrySet().forEach(w->{ //empty
+        session.getQuestionsAndAnswers().entrySet().forEach(w->{
             jsonText.append('"'+w.getKey()+'"'+':'+'"'+w.getValue()+'"').append(',');
         });
         jsonText.append("}").deleteCharAt(jsonText.lastIndexOf(","));
-        Requests requests = requestDAO.saveRequest(chatId, jsonText.toString(),session.getUUID());
+        Requests requests = requestDAO.saveRequest(chatId, jsonText.toString(),
+                session.getUUID());
         addImageCache(chatId,session.getUUID());
         return requests;
     }

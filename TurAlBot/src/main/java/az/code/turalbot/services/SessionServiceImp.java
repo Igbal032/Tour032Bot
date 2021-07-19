@@ -16,7 +16,9 @@ public class SessionServiceImp implements SessionService{
 
     private final SessionCash sessionCash;
 
-    public Session saveSession(long chatId, Action action, Boolean isProgress, Language language, Map<String,String> answers, boolean isNew){
+    public Session saveSession(long chatId, Action action, Boolean isProgress,
+                               Language language, Map<String,String> answers,
+                               boolean isNew){
         Session session = Session.builder()
                 .UUID(GenerateUUID.generateUUID())
                 .chatId(chatId)
@@ -40,7 +42,8 @@ public class SessionServiceImp implements SessionService{
     }
 
     @Override
-    public void updateSession(Long chatId,Action action, Boolean isProgress,Language language, Map<String,String> answers) {
+    public void updateSession(Long chatId,Action action, Boolean isProgress,
+                              Language language, Map<String,String> answers) {
         Session update = findByChatId(chatId);
         update.setCurrentAction(action);
         update.setCurrentLanguage(language);

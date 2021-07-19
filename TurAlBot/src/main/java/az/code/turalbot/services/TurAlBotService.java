@@ -18,7 +18,7 @@ import java.util.Map;
 
 public interface TurAlBotService {
     InlineKeyboardMarkup createButtons(List<Button> buttonList);
-    SendMessage getQuestion(long questionId, Language language, String UUID, Long chatId);
+    SendMessage getQuestion(long questionId, Language language, Long chatId);
     SendMessage handlerInputMessage(Message message);
     SendMessage stopChat(Long chatId);
     SendMessage startChat(Long chatId);

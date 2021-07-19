@@ -38,11 +38,6 @@ public class UserController {
         Requests requests = requestService.getRequestWithUUID(uuid);
         return new ResponseEntity<>(requests.getJsonText(),HttpStatus.OK);
     }
-    @PostMapping("/access")
-    public ResponseEntity<String> access(@RequestParam String uuid) {
-        turAlTelegramBot.removeMessage(6187,1054087888l,new Session());
-        return new ResponseEntity<>("OK",HttpStatus.OK);
-    }
     @PostMapping("/clients")
     public ResponseEntity<String> sendImage(@RequestParam String uuid, @RequestParam("file") MultipartFile file) throws IOException {
         Requests requests = requestService.getRequestWithUUID(uuid);

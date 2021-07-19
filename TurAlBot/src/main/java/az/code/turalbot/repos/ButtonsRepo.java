@@ -13,7 +13,4 @@ public interface ButtonsRepo extends JpaRepository<Button, Long> {
 
     @Query("select b from Button b where b.buttonCallBack=:callBack and b.language.id=:lId")
     Button getButtonWithCallBackAndLangId(String callBack, Long lId);
-
-//    @Query("select b from Button b where b.language.id=:lId and b.question.id=:qId")
-//    List<Button> getKeyboardButton(long qId, Long lId, String phone, String phone);
 }

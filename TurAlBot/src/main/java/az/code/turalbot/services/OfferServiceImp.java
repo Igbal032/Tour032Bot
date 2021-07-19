@@ -19,6 +19,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class OfferServiceImp implements OfferService {
     private final OfferDAO offerDAO;
+    private static final String PHONE_REGEX = "[+]{1}[9]{2}[4]{1}(([5]([0]|[1]|[5]))|([7]([0]|[7]))|([9]([9])))[1-9][0-9]{6}";
 //    private final RabbitTemplate template;
 //    private final TopicExchange exchange2;
 //    @Value("${sample.rabbitmq.receiverKey}")
@@ -28,7 +29,6 @@ public class OfferServiceImp implements OfferService {
         Offer offer = Offer.builder()
                 .UUID(offerDTO.getUUID())
                 .chatId(offerDTO.getChatId())
-//                .companyName(offerDTO.getCompanyName())
                 .companyName("Company Name")
                 .file(offerDTO.getFile())
                 .imgPath(offerDTO.getUUID())
@@ -65,15 +65,8 @@ public class OfferServiceImp implements OfferService {
     }
 
     public boolean checkPhoneNumber(String phone){
-        Pattern pattern = Pattern.compile("[+]{1}[9]{2}[4]{1}(([5]([0]|[1]|[5]))|([7]([0]|[7]))|([9]([9])))[1-9][0-9]{6}");
+        Pattern pattern = Pattern.compile(PHONE_REGEX);
         Matcher matcher = pattern.matcher(phone);
         return matcher.matches();
     }
-
-    @Override
-    public Offer getOffersWithUuidAnMsjId(String UUID, Integer msjId) {
-        return offerDAO.getOffersWithUuidAnMsjId(UUID, msjId);
-    }
-
-
 }

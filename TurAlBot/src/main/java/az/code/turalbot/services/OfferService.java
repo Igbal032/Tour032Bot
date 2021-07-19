@@ -13,5 +13,4 @@ public interface OfferService {
     void setIsShowOnOffer(Offer offerList, Integer msjId);
     boolean isExistOffer(OfferDTO offerDTO);
     String createConfirmOffer(Integer msjId, String UUID,String phoneOrUserName);
-    Offer getOffersWithUuidAnMsjId(String UUID, Integer msjId);
 }

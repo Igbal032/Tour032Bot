@@ -39,14 +39,16 @@ public class OfferDaoImp implements OfferDAO{
 
     @Override
     public boolean isExistOffer(OfferDTO offerDTO) {
-        List<Offer> offerList = offerRepo.getOffersWithUuidAnIsShow(offerDTO.getUUID(),false);
+        List<Offer> offerList = offerRepo.getOffersWithUuidAnIsShow(offerDTO.getUUID()
+                ,false);
         if (offerList.size()==0){
             return false;
         }
         return true;
     }
+
     @Override
-    public ConfirmOffer sendConfirmToRabbitMQ(Integer msjId, String UUID,String phoneNumber){ //todo
+    public ConfirmOffer sendConfirmToRabbitMQ(Integer msjId, String UUID,String phoneNumber){ //todo add to RABBITMQ
         Offer offer = offerRepo.getOfferByUUIDAndMessageId(UUID,msjId);
         if (offer!=null) {
             ConfirmOffer confirmOffer = ConfirmOffer.builder()
@@ -54,7 +56,7 @@ public class OfferDaoImp implements OfferDAO{
                     .companyName(offer.getCompanyName())
                     .UUID(offer.getUUID())
                     .file(offer.getFile())
-                    .phoneOrUserName(phoneNumber)
+                    .phoneNumber(phoneNumber)
                     .build();
             return confirmOfferRepo.save(confirmOffer);
         }
