@@ -12,6 +12,7 @@ import az.code.turalbot.services.interfaces.OfferService;
 import az.code.turalbot.services.interfaces.TurAlBotService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -61,7 +62,7 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
         return replyBot;
     }
 
-    @RabbitListener(queues = "senderQueue")
+    @RabbitListener(queues = "offerQueue")
     public Message sendPhotoToTelegram(OfferDTO offerDTO) throws IOException {
         Session session = sessionCash.findByChatId(offerDTO.getChatId());
         if (cache.findByUUID(offerDTO.getUUID()).getCountOfSendingImage()%5==0

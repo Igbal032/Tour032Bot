@@ -19,7 +19,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-public class UserController {
+public class RequestController {
     private final TurAlBotService turAlBotService;
     private final RequestService requestService;
     private final Cache cache;
