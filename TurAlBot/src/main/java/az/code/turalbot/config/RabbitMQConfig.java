@@ -14,10 +14,10 @@ public class RabbitMQConfig {
 
 //    @Value("${sample.rabbitmq.exchange}")
 //    String exchange;
-//    @Value("${sample.rabbitmq.queue}")
-//    String senderQueue;
-//    @Value("${sample.rabbitmq.routingKey}")
-//    String senderKey;
+//    @Value("${sample.rabbitmq.offerQueue}")
+//    String offerQueue;
+//    @Value("${sample.rabbitmq.offerKey}")
+//    String offerKey;
 
 
     @Bean
@@ -28,38 +28,47 @@ public class RabbitMQConfig {
 
     @Bean
     Queue senderQueue(){
-        return new Queue("senderQueue", true);
+        return new Queue("offerQueue", true);
     }
 
     @Bean
     Binding senderBinding(Queue senderQueue, TopicExchange exchange){
-        return BindingBuilder.bind(senderQueue).to(exchange).with("senderKey");
+        return BindingBuilder.bind(senderQueue).to(exchange).with("offerKey");
     }
-
-//    @Bean
-//    TopicExchange exchange2() {
-//        return new TopicExchange("default2");
-//    }
-
-//    @Bean
-//    Queue receiverQueue(){
-//        return new Queue("receiveQueue", true);
-//    }
-//
-//    @Bean
-//    Binding receiverBinding(Queue senderQueue, TopicExchange exchange){
-//        return BindingBuilder.bind(senderQueue).to(exchange).with("receiveKey");
-//    }
-
     @Bean
     public MessageConverter jsonMessageConverter(){
         return new Jackson2JsonMessageConverter();
     }
-
     @Bean
     public AmqpTemplate template(ConnectionFactory connectionFactory){
         final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jsonMessageConverter());
         return rabbitTemplate;
     }
+
+
+
+//    @Bean
+//    TopicExchange exchange2() {
+//        return new TopicExchange("default2");
+//    }
+//    @Bean
+//    Queue requestQueue(){
+//        return new Queue("requestQueue", true);
+//    }
+//
+//    @Bean
+//    Binding requestBinding(Queue senderQueue, TopicExchange exchange){
+//        return BindingBuilder.bind(senderQueue).to(exchange).with("requestKey");
+//    }
+//    @Bean
+//    public MessageConverter jsonMessageConverter2(){
+//        return new Jackson2JsonMessageConverter();
+//    }
+//    @Bean
+//    public AmqpTemplate template2(ConnectionFactory connectionFactory){
+//        final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+//        rabbitTemplate.setMessageConverter(jsonMessageConverter2());
+//        return rabbitTemplate;
+//    }
 }

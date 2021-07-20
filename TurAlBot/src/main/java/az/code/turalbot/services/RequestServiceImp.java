@@ -24,8 +24,8 @@ public class RequestServiceImp implements RequestService {
     private final RabbitTemplate template;
     private final TopicExchange exchange;
     private final TurAlBotService turAlBotService;
-    @Value("${sample.rabbitmq.senderKey}")
-    String senderKey;
+    @Value("${sample.rabbitmq.offerKey}")
+    String offerKey;
     @Override
     public Requests getRequestWithUUID(String UUID) {
         return requestDAO.getWithUUID(UUID);
@@ -39,7 +39,7 @@ public class RequestServiceImp implements RequestService {
                 .chatId(requests.getChatId())
                 .file(file.getBytes())
                 .build();
-        template.convertAndSend(exchange.getName(),senderKey,offer);
+        template.convertAndSend(exchange.getName(),offerKey,offer);
         return Response.ok();
     }
 }
