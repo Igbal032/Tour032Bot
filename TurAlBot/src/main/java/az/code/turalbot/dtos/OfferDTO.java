@@ -1,5 +1,6 @@
 package az.code.turalbot.dtos;
 
+import az.code.turalbot.models.Agent;
 import lombok.*;
 
 import java.io.Serializable;
@@ -12,7 +13,8 @@ import java.io.Serializable;
 public class OfferDTO implements Serializable {
     private Long chatId;
     private Integer messageId;
-    private String CompanyName;
+    private Long agentId;
+    private ImageDTO imageDTO;
     private String UUID;
     private byte[] file;
 }

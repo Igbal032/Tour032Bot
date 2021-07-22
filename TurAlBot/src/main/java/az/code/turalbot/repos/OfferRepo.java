@@ -13,4 +13,7 @@ public interface OfferRepo extends JpaRepository<Offer, Long> {
 
     Offer getOfferByUUIDAndMessageId(String UUID, Integer msjId);
 
+    @Query("select o from Offer o where o.agent.id=:agentId and o.UUID=:UUID")
+    Offer hasOffer(Long agentId, String UUID);
+
 }

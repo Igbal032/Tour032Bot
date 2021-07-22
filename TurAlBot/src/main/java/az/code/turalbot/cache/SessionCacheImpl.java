@@ -4,11 +4,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class SessionCashImpl implements SessionCash {
+public class SessionCacheImpl implements SessionCache {
 
     private  RedisTemplate redisTemplate;
 
-    public SessionCashImpl(RedisTemplate redisTemplate) {
+    public SessionCacheImpl(RedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 

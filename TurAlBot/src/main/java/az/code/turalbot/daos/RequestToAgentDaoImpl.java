@@ -1,5 +1,6 @@
-package az.code.turalbot.daos.intergaces;
+package az.code.turalbot.daos;
 
+import az.code.turalbot.daos.intergaces.RequestToAgentDAO;
 import az.code.turalbot.enums.RequestStatus;
 import az.code.turalbot.models.Agent;
 import az.code.turalbot.models.RequestToAgent;
@@ -29,5 +30,10 @@ public class RequestToAgentDaoImpl implements RequestToAgentDAO {
                     .build();
             requestToAgentRepo.save(requestToAgent);
         });
+    }
+
+    @Override
+    public List<RequestToAgent> getRequestToAgentByReqId(Long reqId) {
+        return requestToAgentRepo.getRequestToAgentByReqId(reqId);
     }
 }

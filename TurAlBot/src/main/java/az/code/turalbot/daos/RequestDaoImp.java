@@ -15,14 +15,17 @@ import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.w3c.dom.stylesheets.LinkStyle;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class RequestDaoImp implements RequestDAO {
 
     private final RequestRepo requestRepo;
+    private final RequestToAgentRepo requestToAgentRepo;
     private final RequestToAgentDAO requestToAgentDAO;
     private final RabbitTemplate template2;
     private final TopicExchange exchange2;
@@ -33,10 +36,21 @@ public class RequestDaoImp implements RequestDAO {
     public Requests deactivateStatus(String UUID) {
         Requests findRequest = requestRepo.getRequestsByUUID(UUID);
         findRequest.setActive(false);
+        findRequest.setRequestStatus(RequestStatus.STOP.toString());
         requestRepo.save(findRequest);
-
-
+        deactivateAllRequestsForAgents(findRequest.getId());
         return findRequest;
+    }
+
+    public void deactivateAllRequestsForAgents(Long requestId){
+        List<RequestToAgent> requestToAgentList = requestToAgentDAO.getRequestToAgentByReqId(requestId);
+        if (requestToAgentList.size()==0){
+            throw new RequestNotFoundException("request not found");
+        }
+        requestToAgentList.forEach(r->{
+            r.setRequestStatus(RequestStatus.STOP.toString());
+            requestToAgentRepo.save(r);
+        });
     }
 
     @Override

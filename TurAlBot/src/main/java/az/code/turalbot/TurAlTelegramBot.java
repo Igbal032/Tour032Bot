@@ -2,17 +2,18 @@ package az.code.turalbot;
 
 import az.code.turalbot.cache.Cache;
 import az.code.turalbot.cache.ImageCache;
-import az.code.turalbot.cache.SessionCash;
+import az.code.turalbot.cache.SessionCache;
 import az.code.turalbot.dtos.OfferDTO;
 import az.code.turalbot.handlers.TelegramFacade;
 import az.code.turalbot.cache.Session;
+import az.code.turalbot.models.Agent;
 import az.code.turalbot.models.Offer;
+import az.code.turalbot.repos.AgentRepo;
 import az.code.turalbot.repos.ButtonsRepo;
 import az.code.turalbot.services.interfaces.OfferService;
 import az.code.turalbot.services.interfaces.TurAlBotService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -46,7 +47,9 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
     @Autowired
     private Cache cache;
     @Autowired
-    private SessionCash sessionCash;
+    private SessionCache sessionCache;
+    @Autowired
+    private AgentRepo agentRepo;
 
     public TurAlTelegramBot(TurAlBotService turAlBotService) {
         this.turAlBotService = turAlBotService;
@@ -64,7 +67,9 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
 
     @RabbitListener(queues = "offerQueue")
     public Message sendPhotoToTelegram(OfferDTO offerDTO) throws IOException {
-        Session session = sessionCash.findByChatId(offerDTO.getChatId());
+        Session session = sessionCache.findByChatId(offerDTO.getChatId());
+        System.out.println(offerDTO.getAgentId()+ "Agent ID");
+        Agent agent = agentRepo.getById(offerDTO.getAgentId());
         if (cache.findByUUID(offerDTO.getUUID()).getCountOfSendingImage()%5==0
                 &&isAccessOrNot(session.getUUID())==false){
             offerService.createOffer(offerDTO,null,false);
@@ -81,7 +86,7 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
                 }
                 SendPhoto msg = new SendPhoto()
                         .setChatId(offerDTO.getChatId())
-                        .setCaption("Company Name")
+                        .setCaption(agent.getCompanyName())
                         .setPhoto(new InputFile(new ByteArrayInputStream(offerDTO.getFile()),offerDTO.getUUID()));
                 Message message = execute(msg);
                 offerDTO.toBuilder().messageId(message.getMessageId()).build();
@@ -109,7 +114,7 @@ public class TurAlTelegramBot extends TelegramWebhookBot {
             incrCountOfSendingImage(offer.getUUID());
             SendPhoto msg = new SendPhoto()
                     .setChatId(offer.getChatId())
-                    .setCaption(offer.getCompanyName())
+                    .setCaption(offer.getAgent().getCompanyName())
                     .setPhoto(new InputFile(new ByteArrayInputStream(offer.getFile()),offer.getUUID()));
             try {
                 Message message = execute(msg);

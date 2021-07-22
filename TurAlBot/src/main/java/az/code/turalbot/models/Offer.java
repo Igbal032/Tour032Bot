@@ -22,11 +22,13 @@ public class Offer{
    private Long id;
    private String UUID;
    private Long chatId;
-   private String companyName;
+   @OneToOne
+   private Agent agent;
    private String imgPath;
    private Integer messageId;
    private boolean isShow;
    private byte[] file;
+   private String offerStatus;
    @CreationTimestamp
    private LocalDateTime createdDate;
 }

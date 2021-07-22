@@ -2,6 +2,8 @@ package az.code.turalbot.daos;
 
 import az.code.turalbot.daos.intergaces.OfferDAO;
 import az.code.turalbot.dtos.OfferDTO;
+import az.code.turalbot.enums.OfferStatus;
+import az.code.turalbot.models.Agent;
 import az.code.turalbot.models.ConfirmOffer;
 import az.code.turalbot.models.Offer;
 import az.code.turalbot.repos.ConfirmOfferRepo;
@@ -51,11 +53,13 @@ public class OfferDaoImp implements OfferDAO {
         if (offer!=null) {
             ConfirmOffer confirmOffer = ConfirmOffer.builder()
                     .chatId(offer.getChatId())
-                    .companyName(offer.getCompanyName())
+                    .companyName(offer.getAgent().getCompanyName())
                     .UUID(offer.getUUID())
                     .file(offer.getFile())
                     .phoneNumber(phoneNumber)
                     .build();
+            offer.setOfferStatus(OfferStatus.ACCEPT.toString());
+            offerRepo.save(offer);
             return confirmOfferRepo.save(confirmOffer);
         }
         return null;
@@ -63,6 +67,12 @@ public class OfferDaoImp implements OfferDAO {
     @Override
     public Offer getOffersWithUuidAnMsjId(String UUID, Integer msjId) {
         return offerRepo.getOfferByUUIDAndMessageId(UUID, msjId);
+    }
+
+    @Override
+    public Offer hasOffer(Agent agent, String UUID){
+        Offer offer = offerRepo.hasOffer(agent.getId(),UUID);
+        return offer;
     }
 //    @Override
 //    public ConfirmOffer createConfirmOffer(Integer msjId, String UUID,String phoneOrUserName) {

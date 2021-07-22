@@ -1,6 +1,6 @@
 package az.code.turalbot.services;
 
-import az.code.turalbot.cache.SessionCash;
+import az.code.turalbot.cache.SessionCache;
 import az.code.turalbot.models.Action;
 import az.code.turalbot.models.Language;
 import az.code.turalbot.cache.Session;
@@ -15,7 +15,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SessionServiceImp implements SessionService {
 
-    private final SessionCash sessionCash;
+    private final SessionCache sessionCache;
 
     public Session saveSession(long chatId, Action action, Boolean isProgress,
                                Language language, Map<String,String> answers,
@@ -29,17 +29,17 @@ public class SessionServiceImp implements SessionService {
                 .currentLanguage(language)
                 .build();
         System.out.println(session.getUUID()+" START UUID");
-        return sessionCash.save(session);
+        return sessionCache.save(session);
     }
 
     @Override
     public Session findByChatId(Long chatId) {
-        return sessionCash.findByChatId(chatId);
+        return sessionCache.findByChatId(chatId);
     }
 
     @Override
     public void delete(Session session) {
-        sessionCash.delete(session);
+        sessionCache.delete(session);
     }
 
     @Override
@@ -50,6 +50,6 @@ public class SessionServiceImp implements SessionService {
         update.setCurrentLanguage(language);
         update.setIsProgress(isProgress);
         update.setQuestionsAndAnswers(answers);
-       sessionCash.save(update);
+       sessionCache.save(update);
     }
 }

@@ -22,6 +22,7 @@ public class Agent {
     private String companyName;
     private String VOEN;
     private String password;
+    private boolean isVerify;
     @CreationTimestamp
     private LocalDateTime createdDate;
     private LocalDateTime deletedDate;
