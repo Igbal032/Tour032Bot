@@ -1,21 +1,31 @@
 package az.code.turalbot.services;
 
+import az.code.turalbot.Exceptions.RequestNotFoundException;
 import az.code.turalbot.daos.intergaces.OfferDAO;
 import az.code.turalbot.dtos.ImageDTO;
 import az.code.turalbot.dtos.OfferDTO;
+import az.code.turalbot.dtos.ReplyMessageDTO;
 import az.code.turalbot.enums.OfferStatus;
-import az.code.turalbot.enums.RequestStatus;
 import az.code.turalbot.models.*;
 import az.code.turalbot.repos.AgentRepo;
+import az.code.turalbot.repos.ConfirmOfferRepo;
 import az.code.turalbot.repos.RequestRepo;
 import az.code.turalbot.repos.RequestToAgentRepo;
 import az.code.turalbot.services.interfaces.OfferService;
 import az.code.turalbot.utils.Utils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.DataTruncation;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,10 +37,66 @@ public class OfferServiceImp implements OfferService {
     private final RequestRepo requestRepo;
     private final AgentRepo agentRepo;
     private static final String PHONE_REGEX = "[+]{1}[9]{2}[4]{1}(([5]([0]|[1]|[5]))|([7]([0]|[7]))|([9]([9])))[1-9][0-9]{6}";
-//    private final RabbitTemplate template;
-//    private final TopicExchange exchange2;
-//    @Value("${sample.rabbitmq.receiverKey}")
-//    String receiverKey;
+    private final RabbitTemplate template;
+    private final TopicExchange exchange;
+    @Value("${sample.rabbitmq.offerKey}")
+    String offerKey;
+    @Value("${sample.rabbitmq.acceptKey}")
+    String acceptKey;
+
+    @Override
+    public String sendOfferToRabBitMQ(String UUID, ImageDTO imageDTO, Agent agent) throws IOException {
+        Requests requests = requestRepo.getRequestsByUUID(UUID);
+        if (requests==null){
+            throw new RequestNotFoundException("Request not found!!");
+        }
+        if (!requests.isActive()){
+            return "Request is deActive";
+        }
+        if (!isOfferSend(UUID,agent)){
+            Path imgPath = Paths.get(Utils.generateImageBasedOnText(imageDTO));
+            byte[] fileContent = Files.readAllBytes(imgPath);
+            OfferDTO offer = OfferDTO.builder()
+                    .UUID(UUID)
+                    .agentId(agent.getId())
+                    .chatId(requests.getChatId())
+                    .file(fileContent)
+                    .build();
+            template.convertAndSend(exchange.getName(),offerKey,offer);
+            return "Offer was sent";
+        }
+        return "You have already sent offer";
+    }
+
+    @Override
+    public Offer sendReplyRequestToRabBitMQ(String UUID, Integer msjId, String phoneNumber) {
+        Offer offer = offerDAO.getOffersWithUuidAnMsjId(UUID,msjId);
+        if (offer!=null) {
+            System.out.println(phoneNumber+" sendReplyRequestToRabBitMQ");
+            ReplyMessageDTO dto = ReplyMessageDTO.builder()
+                    .UUID(UUID)
+                    .phoneNumber(phoneNumber)
+                    .messageId(msjId)
+                    .build();
+            template.convertAndSend(exchange.getName(),acceptKey,dto);
+            System.out.println("SENT REPLY REQUEST TO RABBIT MQ");
+            return offer;
+        }
+        return null;
+    }
+
+    @Override
+    @RabbitListener(queues = "acceptQueue")
+    public void listenReplyRequestFromRabBitMQ(ReplyMessageDTO dto) {
+        System.out.println(dto.getPhoneNumber()+" listenReplyRequestFromRabBitMQ");
+        Offer findOffer = offerDAO.getOffersWithUuidAnMsjId(dto.getUUID(), dto.getMessageId());
+        findOffer.setPhoneNumber(dto.getPhoneNumber());
+        findOffer.setOfferStatus(OfferStatus.ACCEPT.toString());
+        System.out.println(findOffer.getPhoneNumber()+" Phone");
+        offerDAO.save(findOffer);
+        System.out.println("SAVE REPLY REQUEST FROM RABBIT MQ");
+    }
+
     @Override
     public Offer createOffer(OfferDTO offerDTO, Integer messageId, boolean isShow) {
         Agent agent = agentRepo.getById(offerDTO.getAgentId());
@@ -47,12 +113,20 @@ public class OfferServiceImp implements OfferService {
                     .build();
         RequestToAgent requestToAgent = requestToAgentRepo.getRequestToAgentByAgentAndRequests(agent,requests);
         changeStatusOfRequestToAgent(requestToAgent, OfferStatus.OFFER_SENT);
-        return offerDAO.createOffer(newOffer);
+        return offerDAO.save(newOffer);
     }
 
     public void changeStatusOfRequestToAgent(RequestToAgent requestToAgent, OfferStatus requestStatus){
         requestToAgent.setRequestStatus(requestStatus.toString());
         requestToAgentRepo.save(requestToAgent);
+    }
+
+    public boolean isOfferSend(String UUID, Agent agent){
+        Offer offer = offerDAO.hasOffer(agent,UUID);
+        if(offer==null){
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -71,10 +145,10 @@ public class OfferServiceImp implements OfferService {
     }
 
     @Override
-    public String createConfirmOffer(Integer msjId, String UUID,String phoneNumber) {
+    public String acceptOffer(Integer msjId, String UUID, String phoneNumber) {
         if (checkPhoneNumber(phoneNumber)){
-            ConfirmOffer confirmOffer = offerDAO.sendConfirmToRabbitMQ(msjId,UUID,phoneNumber);
-            if (confirmOffer==null){
+            Offer acceptOffer = sendReplyRequestToRabBitMQ(UUID,msjId,phoneNumber);
+            if (acceptOffer==null){
                 return "noMessageId";
             }
             return "success";

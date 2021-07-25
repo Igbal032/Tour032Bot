@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Entity
 @Table(name = "offers")
-public class Offer{
+public class Offer implements Serializable{
    @Id
    @GeneratedValue(strategy = GenerationType.IDENTITY)
    private Long id;
@@ -29,6 +29,7 @@ public class Offer{
    private boolean isShow;
    private byte[] file;
    private String offerStatus;
+   private String phoneNumber;
    @CreationTimestamp
    private LocalDateTime createdDate;
 }

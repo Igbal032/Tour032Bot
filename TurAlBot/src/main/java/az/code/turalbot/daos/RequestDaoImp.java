@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.stylesheets.LinkStyle;
 
+import javax.ws.rs.core.Request;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,10 +28,6 @@ public class RequestDaoImp implements RequestDAO {
     private final RequestRepo requestRepo;
     private final RequestToAgentRepo requestToAgentRepo;
     private final RequestToAgentDAO requestToAgentDAO;
-    private final RabbitTemplate template2;
-    private final TopicExchange exchange2;
-//    @Value("${sample.rabbitmq.requestKey}")
-//    String requestKey;
 
     @Override
     public Requests deactivateStatus(String UUID) {
@@ -63,15 +60,9 @@ public class RequestDaoImp implements RequestDAO {
     }
 
     @Override
-    public Requests saveRequest(Long chatId, String jsonText,String UUID) {
-        Requests newRequests = Requests.builder()
-                .UUID(UUID).chatId(chatId)
-                .isActive(true).jsonText(jsonText)
-                .requestStatus(RequestStatus.ACTIVE.toString())
-                .createdDate(LocalDateTime.now()).build();
-        Requests request = requestRepo.save(newRequests);
-        requestToAgentDAO.saveRequestForPerAgent(request);
-//        template2.convertAndSend("default2","requestKey",newRequests);
-        return newRequests;
+    public Requests save(Requests requests) {
+        return requestRepo.save(requests);
     }
+
+
 }

@@ -13,5 +13,12 @@ public interface RequestService {
 
     Requests getRequestWithUUID(String UUID);
 
-    String sendDataToRabBitMQ(String UUID, ImageDTO imageDTO, Agent agent) throws IOException;
+    void sendRequestToRabbitMQ(Long chatId, String jsonText,String UUID);
+
+    void listenRequestFromRabbitMQ(Requests request);
+
+    void sendStopRequestToStopRabbitMQ(String UUID);
+
+    void listenStopRequestFromRabbitMQ(String UUID);
+
 }

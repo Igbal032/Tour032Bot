@@ -36,15 +36,17 @@ public class AuthController {
 
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
+        if (authService.isVerify(authenticationRequest.getEmail())){
+            authenticate(authenticationRequest.getEmail(), authenticationRequest.getPassword());
 
-        authenticate(authenticationRequest.getEmail(), authenticationRequest.getPassword());
+            final UserDetails userDetails = userDetailsService
+                    .loadUserByUsername(authenticationRequest.getEmail());
 
-        final UserDetails userDetails = userDetailsService
-                .loadUserByUsername(authenticationRequest.getEmail());
+            final String token = jwtTokenUtil.generateToken(userDetails);
 
-        final String token = jwtTokenUtil.generateToken(userDetails);
-
-        return ResponseEntity.ok(new JwtResponse(token));
+            return ResponseEntity.ok(new JwtResponse(token));
+        }
+        return new ResponseEntity<>("Not confirm",HttpStatus.OK);
     }
 
     @RequestMapping(value = "/register", method = RequestMethod.POST)
@@ -52,11 +54,13 @@ public class AuthController {
         return new ResponseEntity<>(authService.createAgent(agentDTO),HttpStatus.OK);
     }
 
-//    @RequestMapping(value = "/verify", method = RequestMethod.GET)
-//    public ResponseEntity<?> createUser(@PathVariable String token) {
-//
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
+    @GetMapping("/verify/{test}")
+    public ResponseEntity<?> verifyUser(@PathVariable String test) {
+        System.out.println(test+" success");
+        System.out.println("Verified controller");
+        return null;
+//        return new ResponseEntity<>(authService.checkToken(email,token),HttpStatus.OK);
+    }
 
     private void authenticate(String username, String password) throws Exception {
         try {

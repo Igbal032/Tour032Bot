@@ -2,6 +2,7 @@ package az.code.turalbot.models;
 
 import az.code.turalbot.enums.RequestStatus;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;

@@ -10,8 +10,8 @@ import lombok.*;
 @NoArgsConstructor
 @Entity
 @Builder
-@Table(name = "tokens_for_register")
-public class TokenForRegister {
+@Table(name = "confirmation")
+public class Confirmation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -9,13 +9,11 @@ import az.code.turalbot.models.*;
 import az.code.turalbot.models.Button;
 import az.code.turalbot.repos.*;
 import az.code.turalbot.services.interfaces.OfferService;
+import az.code.turalbot.services.interfaces.RequestService;
 import az.code.turalbot.services.interfaces.SessionService;
 import az.code.turalbot.services.interfaces.TurAlBotService;
 import az.code.turalbot.utils.Utils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -38,6 +36,7 @@ public class TurAlBotServiceImp implements TurAlBotService {
     private final ButtonsRepo buttonsRepo;
     private final NotificationRepo notificationRepo;
     private final RequestDAO requestDAO;
+    private final RequestService requestService;
     private final TurAlTelegramBot turAlTelegramBot;
     private final SessionService sessionService;
     private final OfferService offerService;
@@ -58,6 +57,7 @@ public class TurAlBotServiceImp implements TurAlBotService {
             return returnNotification(message.getChatId(),"finish");
         }
         if (session.getCurrentAction().getNextId()==null){
+            System.out.println(message.getText()+" in handlerInputMessage");
             return handleNotifications(session, message);
         }
         if (!correctAnswerOrNot(session.getCurrentAction().getQuestion().getId(),session.getChatId(),message.getText())
@@ -86,7 +86,7 @@ public class TurAlBotServiceImp implements TurAlBotService {
                     sessionService.delete(session);
                     return sendMessage;
                 }
-                Requests requests = requestDAO.deactivateStatus(session.getUUID());
+                requestService.sendStopRequestToStopRabbitMQ(session.getUUID());
                 SendMessage sendMessage = returnNotification(chatId,"stop");
                 sessionService.delete(session);
                 imageCache.delete(imageCache.findByUUID(session.getUUID()));
@@ -105,7 +105,8 @@ public class TurAlBotServiceImp implements TurAlBotService {
     public SendMessage handleNotifications(Session session, Message message){
         if (imageCache.findByUUID(session.getUUID()).getCountOfSendingImage()!=0){
             if(message.getReplyToMessage()!=null){
-                String result = confirmOffer(session.getUUID(),message.getReplyToMessage().getMessageId(),message.getText());
+                String result = offerService
+                        .acceptOffer(message.getReplyToMessage().getMessageId(),session.getUUID(),message.getText());
                 if (result.equals("wrongPhoneNumber")){
                     return returnNotification(message.getChatId(),"wrongPhoneNumber");
                 }
@@ -127,9 +128,6 @@ public class TurAlBotServiceImp implements TurAlBotService {
                 ,session.getQuestionsAndAnswers());
     }
 
-    public String  confirmOffer(String UUID, Integer msjId,String phoneNumber){
-        return offerService.createConfirmOffer(msjId, UUID,phoneNumber);
-    }
 
     @Override
     public SendMessage startChat(Long chatId) {
@@ -197,7 +195,7 @@ public class TurAlBotServiceImp implements TurAlBotService {
             callBackAnswer = getQuestion(action.getNextId()
                     ,session.getCurrentLanguage(),callbackQuery.getMessage().getChatId());
             callBackAnswer.setChatId(callbackQuery.getMessage().getChatId());
-            saveData(callbackQuery.getMessage().getChatId(),
+            saveAnswerToCash(callbackQuery.getMessage().getChatId(),
                     session.getCurrentAction().getQuestion().getKeyWord(),
                     callbackQuery.getData());
             return callBackAnswer;
@@ -206,20 +204,14 @@ public class TurAlBotServiceImp implements TurAlBotService {
                 ,session.getCurrentLanguage(),
                 callbackQuery.getMessage().getChatId());
         callBackAnswer.setChatId(session.getChatId());
-        saveData(callbackQuery.getMessage().getChatId(),
+        saveAnswerToCash(callbackQuery.getMessage().getChatId(),
                 session.getCurrentAction().getQuestion().getKeyWord(),
                 callbackQuery.getData());
         return callBackAnswer;
     }
 
     @Override
-    public Map<String, String> getQuestionsAndAnswers(long chatId) {
-        Session session = sessionService.findByChatId(chatId);
-        return session.getQuestionsAndAnswers();
-    }
-
-    @Override
-    public void saveData(long chatId, String keyWord, String callBackData){
+    public void saveAnswerToCash(long chatId, String keyWord, String callBackData){
         Session session = sessionService.findByChatId(chatId);
         Button findButton = buttonsRepo.getButtonWithCallBackAndLangId(callBackData
                 ,1l);
@@ -303,7 +295,7 @@ public class TurAlBotServiceImp implements TurAlBotService {
         return sendMessage;
     }
 
-    public Requests saveRequest(Long chatId){
+    public void saveRequest(Long chatId){
         Session session = sessionService.findByChatId(chatId);
         StringBuffer jsonText = new StringBuffer();
         jsonText.append("{");
@@ -311,10 +303,9 @@ public class TurAlBotServiceImp implements TurAlBotService {
             jsonText.append('"'+w.getKey()+'"'+':'+'"'+w.getValue()+'"').append(',');
         });
         jsonText.append("}").deleteCharAt(jsonText.lastIndexOf(","));
-        Requests requests = requestDAO.saveRequest(chatId, jsonText.toString(),
+        requestService.sendRequestToRabbitMQ(chatId, jsonText.toString(),
                 session.getUUID());
         addImageCache(chatId,session.getUUID());
-        return requests;
     }
 
     public void addImageCache(Long chatId, String UUID){

@@ -21,7 +21,7 @@ public class OfferDaoImp implements OfferDAO {
     private final ConfirmOfferRepo confirmOfferRepo;
 
     @Override
-    public Offer createOffer(Offer offer) {
+    public Offer save(Offer offer) {
         return offerRepo.save(offer);
     }
 
@@ -48,23 +48,6 @@ public class OfferDaoImp implements OfferDAO {
     }
 
     @Override
-    public ConfirmOffer sendConfirmToRabbitMQ(Integer msjId, String UUID,String phoneNumber){ //todo add to RABBITMQ
-        Offer offer = offerRepo.getOfferByUUIDAndMessageId(UUID,msjId);
-        if (offer!=null) {
-            ConfirmOffer confirmOffer = ConfirmOffer.builder()
-                    .chatId(offer.getChatId())
-                    .companyName(offer.getAgent().getCompanyName())
-                    .UUID(offer.getUUID())
-                    .file(offer.getFile())
-                    .phoneNumber(phoneNumber)
-                    .build();
-            offer.setOfferStatus(OfferStatus.ACCEPT.toString());
-            offerRepo.save(offer);
-            return confirmOfferRepo.save(confirmOffer);
-        }
-        return null;
-    }
-    @Override
     public Offer getOffersWithUuidAnMsjId(String UUID, Integer msjId) {
         return offerRepo.getOfferByUUIDAndMessageId(UUID, msjId);
     }
@@ -74,20 +57,4 @@ public class OfferDaoImp implements OfferDAO {
         Offer offer = offerRepo.hasOffer(agent.getId(),UUID);
         return offer;
     }
-//    @Override
-//    public ConfirmOffer createConfirmOffer(Integer msjId, String UUID,String phoneOrUserName) {
-//        Offer offer = offerRepo.getOfferByUUIDAndMessageId(UUID,msjId);
-//        if (offer!=null){
-//            ConfirmOffer confirmOffer = ConfirmOffer.builder()
-//                    .chatId(offer.getChatId())
-//                    .companyName(offer.getCompanyName())
-//                    .UUID(offer.getUUID())
-//                    .file(offer.getFile())
-//                    .phoneOrUserName(phoneOrUserName)
-//                    .build();
-//            confirmOfferRepo.save(confirmOffer);
-//            return confirmOffer;
-//        }
-//        return null;
-//    }
 }

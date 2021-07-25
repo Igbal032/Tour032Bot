@@ -7,6 +7,5 @@ import java.util.List;
 
 public interface RequestToAgentDAO {
     void saveRequestForPerAgent(Requests requests);
-
     List<RequestToAgent> getRequestToAgentByReqId(Long reqId);
  }

@@ -1,6 +1,5 @@
 package az.code.turalbot.controller;
 
-import az.code.turalbot.Exceptions.RequestNotFoundException;
 import az.code.turalbot.TurAlTelegramBot;
 import az.code.turalbot.cache.Cache;
 import az.code.turalbot.config.JwtTokenUtil;
@@ -8,6 +7,7 @@ import az.code.turalbot.dtos.ImageDTO;
 import az.code.turalbot.models.Agent;
 import az.code.turalbot.models.Requests;
 import az.code.turalbot.repos.AgentRepo;
+import az.code.turalbot.services.interfaces.OfferService;
 import az.code.turalbot.services.interfaces.RequestService;
 import az.code.turalbot.services.interfaces.TurAlBotService;
 
@@ -16,10 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 
 @RestController
@@ -28,6 +26,7 @@ import java.io.IOException;
 public class RequestController {
     private final TurAlBotService turAlBotService;
     private final RequestService requestService;
+    private final OfferService offerService;
     private final AgentRepo agentRepo;
     private final JwtTokenUtil jwtTokenUtil;
     private final Cache cache;
@@ -42,7 +41,7 @@ public class RequestController {
                                             HttpServletRequest request) throws IOException {
         Agent agent = jwtTokenUtil.getUserId(request.getHeader("Authorization"));
         System.out.println(agent.getName());
-        String answer = requestService.sendDataToRabBitMQ(imageDTO.getUUID(),imageDTO,agent);
+        String answer = offerService.sendOfferToRabBitMQ(imageDTO.getUUID(),imageDTO,agent);
         return new ResponseEntity<>(answer,HttpStatus.OK);
     }
 }

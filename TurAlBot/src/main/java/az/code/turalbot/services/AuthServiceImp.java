@@ -5,11 +5,13 @@ import az.code.turalbot.Exceptions.AgentNotFoundException;
 import az.code.turalbot.daos.intergaces.AgentDAO;
 import az.code.turalbot.dtos.AgentDTO;
 import az.code.turalbot.models.Agent;
-import az.code.turalbot.models.Auth.TokenForRegister;
+import az.code.turalbot.models.Auth.Confirmation;
 import az.code.turalbot.repos.TokenForRegisterRepo;
 import az.code.turalbot.services.interfaces.AuthService;
+import az.code.turalbot.utils.MailSenderTest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,10 @@ public class AuthServiceImp implements AuthService {
 
     private final AgentDAO agentDAO;
     private final TokenForRegisterRepo tokenForRegisterRepo;
+    private final MailSenderTest mailSenderTest;
+    @Value("${message.content}")
+    String msjContent;
+
 
     @Override
     public AgentDTO createAgent(AgentDTO agentDTO){
@@ -31,16 +37,14 @@ public class AuthServiceImp implements AuthService {
         String encPassword = new BCryptPasswordEncoder().encode(agent.getPassword());
         agent.setPassword(encPassword);
         String token = "123456";
-        //Get the mailer instance
-//        agentDTO.getEmail(),"Email verification", "You can verify your account" +
-//                " to click the link: http://localhost:3232/api/auth/verify?"+token;
+        mailSenderTest.sendEmail(agentDTO.getEmail(),"Confirmation Email",msjContent+token+"?email="+agentDTO.getEmail());
         agentDAO.save(agent);
-        tokenForRegisterRepo.save(TokenForRegister.builder()
+        tokenForRegisterRepo.save(Confirmation.builder()
                 .email(agent.getEmail())
                 .token(token)
                 .build());
         System.out.println("success");
-        return modelMapper.map(agentDTO, AgentDTO.class);
+        return modelMapper.map(agent, AgentDTO.class);
     }
 
     @Override
@@ -49,5 +53,21 @@ public class AuthServiceImp implements AuthService {
         if (agent==null)
             throw new AgentNotFoundException("Agent not found!!");
         return agent.isVerify();
+    }
+
+    @Override
+    public AgentDTO checkToken(String email, String token) {
+        boolean check =  tokenForRegisterRepo.existsByEmailAndToken(email, token);
+        if (check){
+            Agent agent = agentDAO.getAgentByEmail(email);
+            agent.setVerify(true);
+            agentDAO.save(agent);
+            ModelMapper modelMapper = new ModelMapper();
+            AgentDTO agentDTO = modelMapper.map(agent, AgentDTO.class);
+            System.out.println("checked");
+            return agentDTO;
+        }
+        System.out.println(null+" sds");
+        return null;
     }
 }
