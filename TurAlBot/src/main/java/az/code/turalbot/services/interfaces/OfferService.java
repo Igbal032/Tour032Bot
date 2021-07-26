@@ -20,4 +20,5 @@ public interface OfferService {
     String sendOfferToRabBitMQ(String UUID, ImageDTO imageDTO, Agent agent) throws IOException;
     Offer sendReplyRequestToRabBitMQ(String UUID, Integer msjId, String phoneNumber);
     void listenReplyRequestFromRabBitMQ(ReplyMessageDTO dto);
+    List<Offer> offers(Agent agent);
 }

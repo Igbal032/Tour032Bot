@@ -53,6 +53,13 @@ public class OfferDaoImp implements OfferDAO {
     }
 
     @Override
+    public List<Offer> offers(Agent agent) {
+        List<Offer> offerList = offerRepo.getOffersByAgent(agent);
+        System.out.println(offerList.size()+" size");
+        return offerList;
+    }
+
+    @Override
     public Offer hasOffer(Agent agent, String UUID){
         Offer offer = offerRepo.hasOffer(agent.getId(),UUID);
         return offer;

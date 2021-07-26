@@ -7,4 +7,5 @@ public interface RequestDAO {
     Requests deactivateStatus(String UUID);
     Requests getWithUUID(String UUID);
     Requests save(Requests requests);
+
 }

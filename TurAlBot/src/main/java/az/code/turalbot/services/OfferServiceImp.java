@@ -98,6 +98,11 @@ public class OfferServiceImp implements OfferService {
     }
 
     @Override
+    public List<Offer> offers(Agent agent) {
+        return offerDAO.offers(agent);
+    }
+
+    @Override
     public Offer createOffer(OfferDTO offerDTO, Integer messageId, boolean isShow) {
         Agent agent = agentRepo.getById(offerDTO.getAgentId());
         Requests requests = requestRepo.getRequestsByUUID(offerDTO.getUUID());

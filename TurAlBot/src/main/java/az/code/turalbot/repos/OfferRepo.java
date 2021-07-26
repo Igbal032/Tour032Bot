@@ -1,5 +1,6 @@
 package az.code.turalbot.repos;
 
+import az.code.turalbot.models.Agent;
 import az.code.turalbot.models.Offer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,5 +16,7 @@ public interface OfferRepo extends JpaRepository<Offer, Long> {
 
     @Query("select o from Offer o where o.agent.id=:agentId and o.UUID=:UUID")
     Offer hasOffer(Long agentId, String UUID);
+
+    List<Offer> getOffersByAgent(Agent agent);
 
 }

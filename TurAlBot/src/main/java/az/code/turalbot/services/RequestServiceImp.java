@@ -9,6 +9,7 @@ import az.code.turalbot.dtos.OfferDTO;
 import az.code.turalbot.enums.RequestStatus;
 import az.code.turalbot.models.Agent;
 import az.code.turalbot.models.Offer;
+import az.code.turalbot.models.RequestToAgent;
 import az.code.turalbot.models.Requests;
 import az.code.turalbot.services.interfaces.RequestService;
 import az.code.turalbot.services.interfaces.TurAlBotService;
@@ -22,7 +23,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import javax.ws.rs.core.Request;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +51,7 @@ public class RequestServiceImp implements RequestService {
         Requests newRequests = Requests.builder()
                 .UUID(UUID).chatId(chatId)
                 .isActive(true).jsonText(jsonText)
-                .requestStatus(RequestStatus.ACTIVE.toString())
+                .requestStatus(RequestStatus.ARCHIVE.toString())
                 .build();
         template.convertAndSend(exchange.getName(),requestKey,newRequests);
         System.out.println("Sent to Request Queue");
@@ -61,6 +66,11 @@ public class RequestServiceImp implements RequestService {
         System.out.println("Save to DB");
     }
 
+    public void calculateDeadline(){
+        LocalDateTime current = LocalDateTime.now();
+
+    }
+
     @Override
     public void sendStopRequestToStopRabbitMQ(String UUID) {
         template.convertAndSend(exchange.getName(),stopKey,UUID);
@@ -72,5 +82,24 @@ public class RequestServiceImp implements RequestService {
     public void listenStopRequestFromRabbitMQ(String UUID) {
         requestDAO.deactivateStatus(UUID);
         System.out.println("SAVE STOP FROM RABBIT MQ");
+    }
+
+    @Override
+    public RequestToAgent addArchive(long agentId, long requestId) {
+        RequestToAgent requestToAgent = requestToAgentDAO.getRequestByAgentIdAndRequestId(agentId,requestId);
+        if (requestToAgent!=null){
+            requestToAgent.setRequestStatus(RequestStatus.ARCHIVE.toString());
+            return requestToAgentDAO.save(requestToAgent);
+        }
+        throw new RequestNotFoundException("Request Not Found!!");
+    }
+
+    @Override
+    public List<Requests> getRequestsBasedOnAgentAndStatus(Agent agent, String status) {
+        List<RequestToAgent> requestToAgentList = requestToAgentDAO.getRequestsBasedOnAgentAndStatus(agent,status);
+        List<Requests> requests = requestToAgentList.stream().map(w->{
+            return w.getRequests();
+        }).collect(Collectors.toList());
+        return requests;
     }
 }

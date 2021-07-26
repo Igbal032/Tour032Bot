@@ -1,7 +1,7 @@
 package az.code.turalbot.enums;
 
 public enum RequestStatus {
-    ACTIVE,
+    ARCHIVE,
     WAIT,
     IGNORE,
     STOP

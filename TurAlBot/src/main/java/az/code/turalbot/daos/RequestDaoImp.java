@@ -32,6 +32,9 @@ public class RequestDaoImp implements RequestDAO {
     @Override
     public Requests deactivateStatus(String UUID) {
         Requests findRequest = requestRepo.getRequestsByUUID(UUID);
+        if (findRequest==null){
+            return null;
+        }
         findRequest.setActive(false);
         findRequest.setRequestStatus(RequestStatus.STOP.toString());
         requestRepo.save(findRequest);

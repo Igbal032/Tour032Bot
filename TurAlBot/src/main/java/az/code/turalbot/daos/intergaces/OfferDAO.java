@@ -14,4 +14,5 @@ public interface OfferDAO{
     void setIsShowOnOffer(Offer offer,Integer msjId);
     boolean isExistOffer(OfferDTO offerDTO);
     Offer getOffersWithUuidAnMsjId(String UUID, Integer msjId);
+    List<Offer> offers(Agent agent);
 }

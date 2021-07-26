@@ -36,4 +36,21 @@ public class RequestToAgentDaoImpl implements RequestToAgentDAO {
     public List<RequestToAgent> getRequestToAgentByReqId(Long reqId) {
         return requestToAgentRepo.getRequestToAgentByReqId(reqId);
     }
+
+    @Override
+    public RequestToAgent getRequestByAgentIdAndRequestId(long agentId, long requestId) {
+        RequestToAgent requestToAgent = requestToAgentRepo.getRequestToAgentByAgIdAndReqId(agentId,requestId);
+        return requestToAgent;
+    }
+
+    @Override
+    public List<RequestToAgent> getRequestsBasedOnAgentAndStatus(Agent agent, String status) {
+        return requestToAgentRepo.getRequestByAgentAndStatus(agent,status);
+    }
+
+
+    @Override
+    public RequestToAgent save(RequestToAgent requestToAgent) {
+        return requestToAgentRepo.save(requestToAgent);
+    }
 }

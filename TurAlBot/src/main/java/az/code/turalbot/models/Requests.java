@@ -27,5 +27,6 @@ public class Requests implements Serializable {
     private String jsonText;
     private boolean isActive;
     private String requestStatus;
+    private LocalDateTime expiredDate;
     private LocalDateTime createdDate;
 }
