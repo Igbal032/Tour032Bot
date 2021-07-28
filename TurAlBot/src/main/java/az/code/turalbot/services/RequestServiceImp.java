@@ -21,11 +21,15 @@ import org.springframework.amqp.rabbit.annotation.RabbitListeners;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.ws.rs.core.Request;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +45,12 @@ public class RequestServiceImp implements RequestService {
     String requestKey;
     @Value("${sample.rabbitmq.stopKey}")
     String stopKey;
+    @Value("${company.start.time}")
+    String startedDate;
+    @Value("${company.end.time}")
+    String endedDate;
+    @Value("${company.work.hours}")
+    String workHours;
     @Override
     public Requests getRequestWithUUID(String UUID) {
         return requestDAO.getWithUUID(UUID);
@@ -51,7 +61,7 @@ public class RequestServiceImp implements RequestService {
         Requests newRequests = Requests.builder()
                 .UUID(UUID).chatId(chatId)
                 .isActive(true).jsonText(jsonText)
-                .requestStatus(RequestStatus.ARCHIVE.toString())
+                .requestStatus(RequestStatus.ACTIVE.toString())
                 .build();
         template.convertAndSend(exchange.getName(),requestKey,newRequests);
         System.out.println("Sent to Request Queue");
@@ -61,14 +71,78 @@ public class RequestServiceImp implements RequestService {
     @RabbitListener(queues = "requestQueue")
     public void listenRequestFromRabbitMQ(Requests request) {
         request.setCreatedDate(LocalDateTime.now());
+        request.setExpiredDate(calculateDeadline());
         Requests savedRequest = requestDAO.save(request);
         requestToAgentDAO.saveRequestForPerAgent(savedRequest);
         System.out.println("Save to DB");
     }
 
-    public void calculateDeadline(){
+    @Override
+    public LocalDateTime calculateDeadline(){
+        LocalTime startHour = LocalTime.parse(startedDate);
+        LocalTime endHour = LocalTime.parse(endedDate);
+        LocalTime workHour = LocalTime.parse(workHours);
         LocalDateTime current = LocalDateTime.now();
+        LocalDateTime end = LocalDateTime.of(LocalDate.now(),endHour);
+        LocalDateTime start = LocalDateTime.of(LocalDate.now(),startHour);
+        if (end.isAfter(current)&&start.isBefore(current)){
+            LocalTime remainForToday = differenceCurrentTimeAndEnd(current,end);
+            LocalDateTime remainForNextDay = LocalDateTime.of(LocalDate.now(),remainForToday);
+            LocalTime remainHours = differenceRemainTimeAndWorkHour(remainForNextDay,workHour);
+            LocalDateTime expiredDate = LocalDateTime.of(LocalDate.now().plusDays(1),startHour
+                    .plusHours(remainHours.getHour())
+                    .plusMinutes(remainHours.getMinute())
+                    .plusSeconds(remainHours.getSecond()));
+            System.out.println(expiredDate);
+            return expiredDate;
+        }
+        else {
+            if (LocalTime.now().isBefore(startHour)){
+                LocalDateTime expiredDate = LocalDateTime.of(LocalDate.now(),endHour);
+                return expiredDate;
+            }
+            else {
+                LocalDateTime expiredDate = LocalDateTime.of(LocalDate.now().plusDays(1),endHour);
+                return expiredDate;
+            }
+        }
+    }
 
+    @Override
+    @Scheduled(fixedRate = 5000)
+    public void checkExpiredDate() {
+       List<Requests> requestsList = requestDAO.getRequestsWithStatus(RequestStatus.ACTIVE.toString());
+       requestsList.forEach(r->{
+           if (LocalDateTime.now().isAfter(r.getExpiredDate())){
+               r.setRequestStatus(RequestStatus.EXPIRED.toString());
+               requestDAO.save(r);
+               List<RequestToAgent> requestToAgentList = requestToAgentDAO.getRequestToAgentByReqId(r.getId());
+               requestToAgentList.forEach(rr->{
+                   rr.setRequestStatus(RequestStatus.EXPIRED.toString());
+                   requestToAgentDAO.save(rr);
+               });
+           }
+       });
+    }
+
+    public LocalTime differenceCurrentTimeAndEnd(LocalDateTime current, LocalDateTime end){
+        LocalDateTime tempDateTime = LocalDateTime.from(current);
+        int hours = (int)tempDateTime.until( end, ChronoUnit.HOURS );
+        tempDateTime = tempDateTime.plusHours( hours );
+        int minutes = (int)tempDateTime.until( end, ChronoUnit.MINUTES );
+        tempDateTime = tempDateTime.plusMinutes( minutes );
+        int second = (int)tempDateTime.until( end, ChronoUnit.SECONDS );
+        return LocalTime.of(hours,minutes,second);
+    }
+
+    public LocalTime differenceRemainTimeAndWorkHour(LocalDateTime remainForNextDay, LocalTime workHour){
+        LocalTime tempDateTime2 = LocalTime.from(workHour);
+        int hourss = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.HOURS );
+        tempDateTime2 = tempDateTime2.plusHours( hourss );
+        int minutess = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.MINUTES );
+        tempDateTime2 = tempDateTime2.plusMinutes( minutess );
+        int seconss = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.SECONDS );
+        return LocalTime.of(Math.abs(hourss),Math.abs(minutess),Math.abs(seconss));
     }
 
     @Override

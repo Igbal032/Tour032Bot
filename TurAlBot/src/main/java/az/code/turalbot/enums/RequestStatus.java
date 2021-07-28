@@ -4,5 +4,7 @@ public enum RequestStatus {
     ARCHIVE,
     WAIT,
     IGNORE,
+    ACTIVE,
+    EXPIRED,
     STOP
 }

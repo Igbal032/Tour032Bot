@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface RequestToAgentRepo extends JpaRepository<RequestToAgent, Long> {
 
+
     RequestToAgent getRequestToAgentByAgentAndRequests(Agent agent, Requests requests);
 
     @Query("select r from RequestToAgent r where r.agent.id=:agentId and r.requests.id=:reqId")

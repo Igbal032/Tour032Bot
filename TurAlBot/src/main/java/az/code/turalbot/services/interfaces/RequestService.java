@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 
 import javax.ws.rs.core.Response.*;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface RequestService {
@@ -26,5 +27,9 @@ public interface RequestService {
     RequestToAgent addArchive(long agentId, long requestId);
 
     List<Requests> getRequestsBasedOnAgentAndStatus(Agent agent, String status);
+
+    LocalDateTime calculateDeadline();
+
+    void checkExpiredDate();
 
 }

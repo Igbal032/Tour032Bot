@@ -12,12 +12,20 @@ import az.code.turalbot.services.interfaces.AuthService;
 import az.code.turalbot.utils.JavaMailUtil;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Random;
 
 @Service
@@ -27,8 +35,7 @@ public class AuthServiceImp implements AuthService {
     private final AgentDAO agentDAO;
     private final ConfirmationRepo confirmationRepo;
     private final JavaMailUtil javaMailUtil;
-
-
+    private final AuthenticationManager authenticationManager;
     @Override
     public AgentDTO createAgent(AgentDTO agentDTO) throws MessagingException {
         ModelMapper modelMapper = new ModelMapper();
@@ -50,6 +57,17 @@ public class AuthServiceImp implements AuthService {
         return modelMapper.map(agent, AgentDTO.class);
     }
 
+
+    @Override
+    public void authenticate(String username, String password) throws Exception {
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        } catch (DisabledException e) {
+            throw new Exception("USER_DISABLED", e);
+        } catch (BadCredentialsException e) {
+            throw new Exception("INVALID_CREDENTIALS", e);
+        }
+    }
     public void saveToken(String email, int number, String emailStatus, LocalDateTime expiredDate){
         Confirmation confirmation = Confirmation.builder()
                 .email(email)

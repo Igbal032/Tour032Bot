@@ -6,6 +6,7 @@ import az.code.turalbot.models.Agent;
 import javax.mail.MessagingException;
 
 public interface AuthService {
+    void authenticate(String username, String password) throws Exception;
     AgentDTO createAgent(AgentDTO agentDTO) throws MessagingException;
     boolean isVerify(String email);
     String verifyUser(String email, int confirmationNumber);

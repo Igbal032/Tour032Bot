@@ -7,6 +7,7 @@ import az.code.turalbot.models.Auth.JwtRequest;
 import az.code.turalbot.models.Auth.JwtResponse;
 import az.code.turalbot.services.JwtUserDetailsService;
 import az.code.turalbot.services.interfaces.AuthService;
+import org.apache.tomcat.jni.Local;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +21,16 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 
 @RestController
 @RequestMapping("api/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -37,13 +41,10 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-
-
     @RequestMapping(value = "/authenticate", method = RequestMethod.POST)
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) throws Exception {
         if (authService.isVerify(authenticationRequest.getEmail())){
-            authenticate(authenticationRequest.getEmail(), authenticationRequest.getPassword());
-
+            authService.authenticate(authenticationRequest.getEmail(), authenticationRequest.getPassword());
             final UserDetails userDetails = userDetailsService
                     .loadUserByUsername(authenticationRequest.getEmail());
 
@@ -85,13 +86,9 @@ public class AuthController {
         return new ResponseEntity<>(authService.changePassword(agent,oldPsw,newPsw), HttpStatus.OK);
     }
 
-    private void authenticate(String username, String password) throws Exception {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-        } catch (DisabledException e) {
-            throw new Exception("USER_DISABLED", e);
-        } catch (BadCredentialsException e) {
-            throw new Exception("INVALID_CREDENTIALS", e);
-        }
+    @GetMapping("/time")
+    public ResponseEntity<?> getTime(){
+        return new ResponseEntity<>(HttpStatus.OK);
     }
+
 }

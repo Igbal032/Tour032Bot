@@ -6,6 +6,7 @@ import az.code.turalbot.dtos.ImageDTO;
 import az.code.turalbot.dtos.OfferDTO;
 import az.code.turalbot.dtos.ReplyMessageDTO;
 import az.code.turalbot.enums.OfferStatus;
+import az.code.turalbot.enums.RequestStatus;
 import az.code.turalbot.models.*;
 import az.code.turalbot.repos.AgentRepo;
 import az.code.turalbot.repos.ConfirmOfferRepo;
@@ -52,6 +53,9 @@ public class OfferServiceImp implements OfferService {
         }
         if (!requests.isActive()){
             return "Request is deActive";
+        }
+        if (requests.getRequestStatus().equals(RequestStatus.EXPIRED.toString())){
+            return "Request is EXPIRED";
         }
         if (!isOfferSend(UUID,agent)){
             Path imgPath = Paths.get(Utils.generateImageBasedOnText(imageDTO));

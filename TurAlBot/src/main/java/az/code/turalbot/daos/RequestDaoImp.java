@@ -67,5 +67,10 @@ public class RequestDaoImp implements RequestDAO {
         return requestRepo.save(requests);
     }
 
+    @Override
+    public List<Requests> getRequestsWithStatus(String status) {
+        return requestRepo.getAllRequestsWithActive(status);
+    }
+
 
 }
