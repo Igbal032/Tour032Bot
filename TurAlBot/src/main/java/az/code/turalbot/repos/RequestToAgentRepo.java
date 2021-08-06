@@ -22,4 +22,7 @@ public interface RequestToAgentRepo extends JpaRepository<RequestToAgent, Long> 
     @Query("select r from RequestToAgent r where r.agent=:agent and r.requestStatus=:status")
     List<RequestToAgent> getRequestByAgentAndStatus(Agent agent, String status);
 
+    @Query("select r from RequestToAgent r where r.agent=:agent and r.isArchive=:isArch")
+    List<RequestToAgent> getRequestByAgentAndArchive(Agent agent, boolean isArch);
+
 }

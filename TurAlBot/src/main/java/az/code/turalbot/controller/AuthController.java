@@ -81,14 +81,14 @@ public class AuthController {
     public ResponseEntity<String> changePassword(HttpServletRequest request,
                                                  @RequestParam String oldPsw,
                                                  @RequestParam  String newPsw){
-        System.out.println("enetred");
         Agent agent = jwtTokenUtil.getUserId(request.getHeader("Authorization"));
         return new ResponseEntity<>(authService.changePassword(agent,oldPsw,newPsw), HttpStatus.OK);
     }
 
-    @GetMapping("/time")
-    public ResponseEntity<?> getTime(){
-        return new ResponseEntity<>(HttpStatus.OK);
+    @GetMapping("/time/{param1}")
+    public ResponseEntity<?> getTime(@PathVariable String param1){
+        System.out.println("Ishledi"+ param1);
+        return new ResponseEntity<>("Ishledi",HttpStatus.OK);
     }
 
 }

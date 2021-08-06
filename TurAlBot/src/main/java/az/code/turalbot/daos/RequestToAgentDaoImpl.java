@@ -25,7 +25,7 @@ public class RequestToAgentDaoImpl implements RequestToAgentDAO {
         agentList.stream().parallel().forEach(agent -> {
             RequestToAgent requestToAgent = RequestToAgent.builder()
                     .agent(agent)
-                    .requestStatus(RequestStatus.WAIT.toString())
+                    .requestStatus(RequestStatus.ACTIVE.toString())
                     .requests(requests)
                     .build();
             requestToAgentRepo.save(requestToAgent);
@@ -46,6 +46,11 @@ public class RequestToAgentDaoImpl implements RequestToAgentDAO {
     @Override
     public List<RequestToAgent> getRequestsBasedOnAgentAndStatus(Agent agent, String status) {
         return requestToAgentRepo.getRequestByAgentAndStatus(agent,status);
+    }
+
+    @Override
+    public List<RequestToAgent> getRequestsOnArchive(Agent agent) {
+        return requestToAgentRepo.getRequestByAgentAndArchive(agent, true);
     }
 
 

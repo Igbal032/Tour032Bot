@@ -38,7 +38,7 @@ public class RequestController {
         Requests requests = requestService.getRequestWithUUID(uuid);
         return new ResponseEntity<>(requests.getJsonText(),HttpStatus.OK);
     }
-    @PostMapping("/clients")
+    @PostMapping("/sendOffer")
     public ResponseEntity<String> sendImage(@RequestBody ImageDTO imageDTO,
                                             HttpServletRequest request) throws IOException {
         Agent agent = jwtTokenUtil.getUserId(request.getHeader("Authorization"));
@@ -57,7 +57,7 @@ public class RequestController {
     @GetMapping("/archives")
     public ResponseEntity<List<Requests>> archives(HttpServletRequest request){
         Agent agent = jwtTokenUtil.getUserId(request.getHeader("Authorization"));
-        return new ResponseEntity<>(requestService.getRequestsBasedOnAgentAndStatus(agent, RequestStatus.ARCHIVE.toString()),HttpStatus.OK);
+        return new ResponseEntity<>(requestService.getRequestsByArchive(agent),HttpStatus.OK);
     }
 
     @GetMapping("/offers")

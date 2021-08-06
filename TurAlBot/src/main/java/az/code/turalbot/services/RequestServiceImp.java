@@ -137,12 +137,12 @@ public class RequestServiceImp implements RequestService {
 
     public LocalTime differenceRemainTimeAndWorkHour(LocalDateTime remainForNextDay, LocalTime workHour){
         LocalTime tempDateTime2 = LocalTime.from(workHour);
-        int hourss = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.HOURS );
-        tempDateTime2 = tempDateTime2.plusHours( hourss );
+        int hours = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.HOURS );
+        tempDateTime2 = tempDateTime2.plusHours( hours );
         int minutess = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.MINUTES );
         tempDateTime2 = tempDateTime2.plusMinutes( minutess );
         int seconss = (int)tempDateTime2.until( remainForNextDay, ChronoUnit.SECONDS );
-        return LocalTime.of(Math.abs(hourss),Math.abs(minutess),Math.abs(seconss));
+        return LocalTime.of(Math.abs(hours),Math.abs(minutess),Math.abs(seconss));
     }
 
     @Override
@@ -162,7 +162,7 @@ public class RequestServiceImp implements RequestService {
     public RequestToAgent addArchive(long agentId, long requestId) {
         RequestToAgent requestToAgent = requestToAgentDAO.getRequestByAgentIdAndRequestId(agentId,requestId);
         if (requestToAgent!=null){
-            requestToAgent.setRequestStatus(RequestStatus.ARCHIVE.toString());
+            requestToAgent.setArchive(true);
             return requestToAgentDAO.save(requestToAgent);
         }
         throw new RequestNotFoundException("Request Not Found!!");
@@ -171,6 +171,15 @@ public class RequestServiceImp implements RequestService {
     @Override
     public List<Requests> getRequestsBasedOnAgentAndStatus(Agent agent, String status) {
         List<RequestToAgent> requestToAgentList = requestToAgentDAO.getRequestsBasedOnAgentAndStatus(agent,status);
+        List<Requests> requests = requestToAgentList.stream().map(w->{
+            return w.getRequests();
+        }).collect(Collectors.toList());
+        return requests;
+    }
+
+    @Override
+    public List<Requests> getRequestsByArchive(Agent agent) {
+        List<RequestToAgent> requestToAgentList = requestToAgentDAO.getRequestsOnArchive(agent);
         List<Requests> requests = requestToAgentList.stream().map(w->{
             return w.getRequests();
         }).collect(Collectors.toList());

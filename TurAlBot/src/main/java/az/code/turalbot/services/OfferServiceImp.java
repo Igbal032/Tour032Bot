@@ -21,6 +21,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,7 +59,7 @@ public class OfferServiceImp implements OfferService {
             return "Request is EXPIRED";
         }
         if (!isOfferSend(UUID,agent)){
-            Path imgPath = Paths.get(Utils.generateImageBasedOnText(imageDTO));
+            Path imgPath = Paths.get(Utils.generateImageBasedOnText(imageDTO,agent.getCompanyName()));
             byte[] fileContent = Files.readAllBytes(imgPath);
             OfferDTO offer = OfferDTO.builder()
                     .UUID(UUID)

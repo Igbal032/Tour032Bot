@@ -24,6 +24,7 @@ public class RequestToAgent implements Serializable {
     @OneToOne
     private Requests requests;
     private String requestStatus;
+    private boolean isArchive;
     @CreationTimestamp
     private LocalDateTime createdDate;
 }

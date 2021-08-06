@@ -15,5 +15,7 @@ public interface RequestToAgentDAO {
 
     List<RequestToAgent> getRequestsBasedOnAgentAndStatus(Agent agent, String status);
 
+    List<RequestToAgent> getRequestsOnArchive(Agent agent);
+
     RequestToAgent save(RequestToAgent requestToAgent);
  }

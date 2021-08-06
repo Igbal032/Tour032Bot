@@ -28,6 +28,8 @@ public interface RequestService {
 
     List<Requests> getRequestsBasedOnAgentAndStatus(Agent agent, String status);
 
+    List<Requests> getRequestsByArchive(Agent agent);
+
     LocalDateTime calculateDeadline();
 
     void checkExpiredDate();

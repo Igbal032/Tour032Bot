@@ -12,5 +12,7 @@ public class ImageDTO {
     private String companyName;
     private double price;
     private String dateRange;
-    private String additionalInfo;
+    private String place;
+    private String notes;
+    private String description;
 }
