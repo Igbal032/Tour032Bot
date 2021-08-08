@@ -75,7 +75,6 @@ public class OfferServiceImp implements OfferService {
     public Offer sendReplyRequestToRabBitMQ(String UUID, Integer msjId, String phoneNumber) {
         Offer offer = offerDAO.getOffersWithUuidAnMsjId(UUID,msjId);
         if (offer!=null) {
-            System.out.println(phoneNumber+" sendReplyRequestToRabBitMQ");
             ReplyMessageDTO dto = ReplyMessageDTO.builder()
                     .UUID(UUID)
                     .phoneNumber(phoneNumber)
@@ -91,11 +90,9 @@ public class OfferServiceImp implements OfferService {
     @Override
     @RabbitListener(queues = "acceptQueue")
     public void listenReplyRequestFromRabBitMQ(ReplyMessageDTO dto) {
-        System.out.println(dto.getPhoneNumber()+" listenReplyRequestFromRabBitMQ");
         Offer findOffer = offerDAO.getOffersWithUuidAnMsjId(dto.getUUID(), dto.getMessageId());
         findOffer.setPhoneNumber(dto.getPhoneNumber());
         findOffer.setOfferStatus(OfferStatus.ACCEPT.toString());
-        System.out.println(findOffer.getPhoneNumber()+" Phone");
         offerDAO.save(findOffer);
         System.out.println("SAVE REPLY REQUEST FROM RABBIT MQ");
     }

@@ -1,7 +1,8 @@
-package az.code.Tour032.config;
+package az.code.Tour032.config.product;
 
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
@@ -10,7 +11,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-@Profile("dev")
+import java.net.URI;
+import java.net.URISyntaxException;
+
+@Profile("!dev")
 @Configuration
 public class RabbitMQConfig {
 
@@ -55,15 +59,28 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(stopQueue).to(exchange).with("acceptKey");
     }
 
+
+
     @Bean
-    public MessageConverter jsonMessageConverter(){
+    public Jackson2JsonMessageConverter converter() {
         return new Jackson2JsonMessageConverter();
     }
 
     @Bean
-    public AmqpTemplate template(ConnectionFactory connectionFactory){
-        final RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(jsonMessageConverter());
-        return rabbitTemplate;
+    public ConnectionFactory connectionFactory() throws URISyntaxException {
+        final URI rabbitMqUrl = new URI(System.getenv("CLOUDAMQP_URL"));
+        final CachingConnectionFactory factory = new CachingConnectionFactory();
+        factory.setUri(rabbitMqUrl);
+        return factory;
     }
+
+    @Bean
+    public RabbitTemplate template() throws URISyntaxException {
+        RabbitTemplate temp = new RabbitTemplate(connectionFactory());
+        temp.setMessageConverter(converter());
+        return temp;
+    }
+
+
+
 }
